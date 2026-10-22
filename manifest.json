@@ -1,0 +1,9 @@
+{
+  "short_name": "BoxScore",
+  "name": "Basketball Box Score Tracker",
+  "icons": [],
+  "start_url": ".",
+  "background_color": "#121212",
+  "theme_color": "#ea580c",
+  "display": "standalone"
+}
