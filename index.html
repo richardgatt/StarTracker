@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Basketball Box Score Tracker PWA</title>
+    <!-- Manifest for PWA Support -->
+    <link rel="manifest" href="data:application/manifest+json,{
+        %22name%22:%22Basketball%20Box%20Score%20Tracker%22,
+        %22short_name%22:%22BoxScorePRO%22,
+        %22start_url%22:%22.%22,
+        %22display%22:%22standalone%22,
+        %22background_color%22:%22%23090d16%22,
+        %22theme_color%22:%22%23ea580c%22,
+        %22icons%22:[{%22src%22:%22https://placehold.co/192x192/ea580c/ffffff?text=BBall%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22}]
+    }">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="styles.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        court: {
+                            orange: '#f97316',
+                            darkOrange: '#ea580c',
+                            wood: '#d97706',
+                            bg: '#090d16',
+                            card: '#131c2e',
+                            accent: '#38bdf8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-slate-950 text-slate-100 font-sans antialiased flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
+
+    <!-- TOP APP HEADER -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 px-3 py-2 shadow-lg flex-shrink-0">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-gradient-to-tr from-orange-600 to-amber-500 p-2 rounded-xl text-white shadow-md shadow-orange-950/50">
+                    <i class="fa-solid fa-basketball text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-base md:text-lg tracking-tight leading-none bg-gradient-to-r from-orange-400 to-amber-200 bg-clip-text text-transparent">
+                        BoxScore <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-950 text-orange-400 font-semibold border border-orange-800/50">PRO PWA</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 font-medium">Offline Basketball Courtside Stats</p>
+                </div>
+            </div>
+
+            <!-- Real Clock & Offline Status Indicator -->
+            <div class="flex items-center space-x-2 text-xs">
+                <div class="hidden sm:flex items-center space-x-1.5 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700 text-amber-300 font-mono font-bold">
+                    <i class="fa-regular fa-clock text-[10px]"></i>
+                    <span id="realtimeClockDisplay">--:--:--</span>
+                </div>
+                <div id="offlineIndicator" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <i class="fa-solid fa-wifi text-[10px]"></i>
+                    <span class="font-medium hidden md:inline" id="connectionText">Online</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION TABS -->
+    <nav class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-[49px] z-30 flex-shrink-0">
+        <div class="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar px-2">
+            <button onclick="switchTab('tracker')" id="tab-tracker" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 text-center text-xs md:text-sm font-semibold border-b-2 border-orange-500 text-orange-400 flex justify-center items-center space-x-1.5">
+                <i class="fa-solid fa-bolt text-sm"></i>
+                <span>Live Tracker</span>
+            </button>
+            <button onclick="switchTab('boxscore')" id="tab-boxscore" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 text-center text-xs md:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-1.5">
+                <i class="fa-solid fa-table-list text-sm"></i>
+                <span>Box Score</span>
+            </button>
+            <button onclick="switchTab('roster')" id="tab-roster" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 text-center text-xs md:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-1.5">
+                <i class="fa-solid fa-sliders text-sm"></i>
+                <span>Setup & Teams</span>
+            </button>
+            <button onclick="switchTab('matches')" id="tab-matches" class="tab-btn flex-1 min-w-[90px] py-2.5 px-3 text-center text-xs md:text-sm font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-1.5">
+                <i class="fa-solid fa-folder-open text-sm"></i>
+                <span>Saved Matches</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto w-full flex-grow p-2 sm:p-4 space-y-4 overflow-y-auto">
+
+        <!-- ==================== 1. LIVE TRACKER TAB ==================== -->
+        <section id="view-tracker" class="tab-view space-y-4">
+            
+            <!-- HEADER SCOREBOARD BANNER -->
+            <div id="scoreboardBanner" class="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-3 sm:p-4 border border-slate-700/80 shadow-2xl relative overflow-hidden transition-all">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-500 via-orange-500 to-red-500"></div>
+
+                <div class="flex items-center justify-between gap-2">
+                    <!-- Home Team Quarter Fouls & Timeouts -->
+                    <div class="flex-1 text-center bg-slate-950/70 p-2 sm:p-3 rounded-xl border border-slate-800 space-y-2" id="scoreboardHomeCard">
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <span class="w-3 h-3 rounded-full inline-block shadow" id="homeColorBadge"></span>
+                            <h2 class="text-xs sm:text-base font-extrabold truncate text-slate-100" id="homeScoreName">HOME</h2>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1 text-center">
+                            <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold">Qtr Fouls</span>
+                                <span class="text-lg sm:text-2xl font-black font-mono text-rose-400" id="homeQuarterFouls">0</span>
+                            </div>
+                            <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold">Timeouts</span>
+                                <span class="text-lg sm:text-2xl font-black font-mono text-amber-300" id="homeTimeoutsCount">0</span>
+                            </div>
+                        </div>
+                        <button onclick="callTimeout('home')" class="action-btn w-full bg-amber-600 hover:bg-amber-500 active:scale-95 text-white py-1.5 rounded-lg text-xs font-bold shadow flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-pause text-[10px]"></i>
+                            <span>Call Timeout</span>
+                        </button>
+                    </div>
+
+                    <!-- Center Period & Advance Quarter Controls -->
+                    <div class="px-2 flex flex-col items-center justify-center space-y-2 min-w-[110px] sm:min-w-[140px]">
+                        <span class="text-xs sm:text-sm font-black uppercase tracking-wider text-orange-400 bg-orange-950/90 px-3 py-1 rounded-full border border-orange-800 shadow" id="periodDisplay">
+                            Q1
+                        </span>
+                        
+                        <button onclick="openAdvanceQuarterModal()" class="action-btn bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-2 rounded-xl text-xs font-extrabold shadow-lg border border-amber-400/30 flex items-center space-x-1.5">
+                            <span>Advance Qtr</span>
+                            <i class="fa-solid fa-forward-step text-[11px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- Away Team Quarter Fouls & Timeouts -->
+                    <div class="flex-1 text-center bg-slate-950/70 p-2 sm:p-3 rounded-xl border border-slate-800 space-y-2" id="scoreboardAwayCard">
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <h2 class="text-xs sm:text-base font-extrabold truncate text-slate-100" id="awayScoreName">AWAY</h2>
+                            <span class="w-3 h-3 rounded-full inline-block shadow" id="awayColorBadge"></span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1 text-center">
+                            <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold">Qtr Fouls</span>
+                                <span class="text-lg sm:text-2xl font-black font-mono text-rose-400" id="awayQuarterFouls">0</span>
+                            </div>
+                            <div class="bg-slate-900 p-1.5 rounded-lg border border-slate-800">
+                                <span class="block text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold">Timeouts</span>
+                                <span class="text-lg sm:text-2xl font-black font-mono text-amber-300" id="awayTimeoutsCount">0</span>
+                            </div>
+                        </div>
+                        <button onclick="callTimeout('away')" class="action-btn w-full bg-amber-600 hover:bg-amber-500 active:scale-95 text-white py-1.5 rounded-lg text-xs font-bold shadow flex items-center justify-center space-x-1">
+                            <i class="fa-solid fa-pause text-[10px]"></i>
+                            <span>Call Timeout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LIVE PLAYER TILES CONTAINER -->
+            <div id="courtTeamsLayout" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                
+                <!-- HOME TEAM ACTIVE TILES SECTION -->
+                <div id="homeActiveSection" class="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-lg space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3.5 h-3.5 rounded-full shadow" id="homeTeamTileBadge"></span>
+                            <h3 class="font-extrabold text-sm text-slate-100" id="homeTeamSectionTitle">Home Team - On Court (Active 5)</h3>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium">Direct Action Grid</span>
+                    </div>
+
+                    <!-- Active Player Tiles Stack -->
+                    <div class="space-y-3" id="homeActiveTilesContainer"></div>
+
+                    <!-- Home Bench -->
+                    <div class="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                                <i class="fa-solid fa-chair text-amber-500"></i>
+                                <span>Home Substitutes (Drag/Tap to sub)</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2" id="homeBenchContainer"></div>
+                    </div>
+                </div>
+
+                <!-- AWAY TEAM ACTIVE TILES SECTION -->
+                <div id="awayActiveSection" class="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-lg space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3.5 h-3.5 rounded-full shadow" id="awayTeamTileBadge"></span>
+                            <h3 class="font-extrabold text-sm text-slate-100" id="awayTeamSectionTitle">Away Team - On Court (Active 5)</h3>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-medium">Direct Action Grid</span>
+                    </div>
+
+                    <!-- Active Player Tiles Stack -->
+                    <div class="space-y-3" id="awayActiveTilesContainer"></div>
+
+                    <!-- Away Bench -->
+                    <div class="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                                <i class="fa-solid fa-chair text-amber-500"></i>
+                                <span>Away Substitutes (Drag/Tap to sub)</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-2" id="awayBenchContainer"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RECENT PLAY-BY-PLAY FEED -->
+            <div class="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800 shadow-lg space-y-2.5">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <div>
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+                            <i class="fa-solid fa-list-ul text-orange-400"></i>
+                            <span>Recent Play Log & Purge Queue</span>
+                        </h3>
+                        <p class="text-[10px] text-slate-400">Flagged plays will be purged & reverted automatically on Quarter Advance.</p>
+                    </div>
+                    <button onclick="undoLastEvent()" class="action-btn bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 px-3 py-1 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-1.5 shadow">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Undo Last Play</span>
+                    </button>
+                </div>
+                
+                <div id="playLogContainer" class="max-h-56 overflow-y-auto space-y-1.5 text-xs pr-1">
+                    <div class="text-slate-500 italic text-center py-3">No plays logged yet. Tapping player stat buttons logs real-time events here.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== 2. BOX SCORE TAB ==================== -->
+        <section id="view-boxscore" class="tab-view hidden space-y-5">
+            <!-- HOME TEAM BOX SCORE TABLE -->
+            <div id="homeBoxSection" class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3.5 h-3.5 rounded-full" id="homeBoxBadge"></span>
+                        <h3 class="font-bold text-base text-white" id="homeBoxTitle">Home Team Box Score</h3>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left font-mono">
+                        <thead class="text-[11px] text-slate-400 bg-slate-950 uppercase border-b border-slate-800">
+                            <tr>
+                                <th class="p-2">#</th>
+                                <th class="p-2 min-w-[120px]">Player</th>
+                                <th class="p-2 text-center text-orange-400 font-bold">PTS</th>
+                                <th class="p-2 text-center">FGM/A</th>
+                                <th class="p-2 text-center">FG%</th>
+                                <th class="p-2 text-center">3PM/A</th>
+                                <th class="p-2 text-center">3P%</th>
+                                <th class="p-2 text-center">FTM/A</th>
+                                <th class="p-2 text-center">FT%</th>
+                                <th class="p-2 text-center">REB (O/D)</th>
+                                <th class="p-2 text-center">AST</th>
+                                <th class="p-2 text-center">STL</th>
+                                <th class="p-2 text-center">BLK</th>
+                                <th class="p-2 text-center">TO</th>
+                                <th class="p-2 text-center">PF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="homeBoxScoreBody" class="divide-y divide-slate-800/60"></tbody>
+                        <tfoot id="homeBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-800"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- AWAY TEAM BOX SCORE TABLE -->
+            <div id="awayBoxSection" class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3.5 h-3.5 rounded-full" id="awayBoxBadge"></span>
+                        <h3 class="font-bold text-base text-white" id="awayBoxTitle">Away Team Box Score</h3>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left font-mono">
+                        <thead class="text-[11px] text-slate-400 bg-slate-950 uppercase border-b border-slate-800">
+                            <tr>
+                                <th class="p-2">#</th>
+                                <th class="p-2 min-w-[120px]">Player</th>
+                                <th class="p-2 text-center text-orange-400 font-bold">PTS</th>
+                                <th class="p-2 text-center">FGM/A</th>
+                                <th class="p-2 text-center">FG%</th>
+                                <th class="p-2 text-center">3PM/A</th>
+                                <th class="p-2 text-center">3P%</th>
+                                <th class="p-2 text-center">FTM/A</th>
+                                <th class="p-2 text-center">FT%</th>
+                                <th class="p-2 text-center">REB (O/D)</th>
+                                <th class="p-2 text-center">AST</th>
+                                <th class="p-2 text-center">STL</th>
+                                <th class="p-2 text-center">BLK</th>
+                                <th class="p-2 text-center">TO</th>
+                                <th class="p-2 text-center">PF</th>
+                            </tr>
+                        </thead>
+                        <tbody id="awayBoxScoreBody" class="divide-y divide-slate-800/60"></tbody>
+                        <tfoot id="awayBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-800"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- EXPORT BAR -->
+            <div class="flex flex-wrap gap-2 justify-end">
+                <button onclick="copyBoxScoreReport()" class="action-btn bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-700 flex items-center space-x-2">
+                    <i class="fa-solid fa-copy text-orange-400"></i>
+                    <span>Copy Text Summary</span>
+                </button>
+                <button onclick="exportGameCSV()" class="action-btn bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md flex items-center space-x-2">
+                    <i class="fa-solid fa-file-csv"></i>
+                    <span>Export CSV</span>
+                </button>
+                <button onclick="exportGameJSON()" class="action-btn bg-blue-700 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md flex items-center space-x-2">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span>Export JSON</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 3. SETUP / TEAMS TAB ==================== -->
+        <section id="view-roster" class="tab-view hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-4">
+                <h3 class="text-base font-bold text-white border-b border-slate-800 pb-2 flex items-center space-x-2">
+                    <i class="fa-solid fa-gear text-orange-400"></i>
+                    <span>Match Dashboard Settings</span>
+                </h3>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="block text-xs font-bold text-white">Tracking Scope</span>
+                                <span class="text-[11px] text-slate-400" id="modeDescription">Track My Team Only or Both Teams</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="trackingModeToggle" onchange="handleTrackingModeChange(this.checked)" class="sr-only peer">
+                                <div class="w-12 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                            </label>
+                        </div>
+
+                        <div id="myTeamSelectWrapper" class="pt-2 border-t border-slate-800 flex items-center justify-between opacity-50 pointer-events-none transition-opacity">
+                            <span class="text-xs font-semibold text-slate-300">Select "My Team":</span>
+                            <select id="myTeamSelect" onchange="handleMyTeamChange(this.value)" class="bg-slate-800 text-orange-400 font-bold border border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none">
+                                <option value="home">Home Team</option>
+                                <option value="away">Away Team</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="createNewGamePrompt()" class="action-btn bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Start New Match / Reset Match</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ROSTERS EDITING GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- HOME TEAM ROSTER -->
+                <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4" id="homeRosterCard">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-house text-orange-400"></i>
+                            <span id="homeRosterTitle">Home Team Setup</span>
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Team Name</label>
+                            <input type="text" id="homeTeamNameInput" value="Home Warriors" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Color</label>
+                            <input type="color" id="homeTeamColorInput" value="#f97316" class="w-full h-8 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer p-0.5">
+                        </div>
+                    </div>
+
+                    <div id="homeRosterInputBlock" class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <span class="text-[11px] font-bold text-slate-300">Add Player to Home Roster</span>
+                        <div class="flex space-x-2">
+                            <input type="number" id="newHomeJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                            <input type="text" id="newHomeName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            <button onclick="addPlayerToRoster('home')" class="action-btn bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1" id="homeRosterList"></div>
+                </div>
+
+                <!-- AWAY TEAM ROSTER -->
+                <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4" id="awayRosterCard">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <h3 class="font-bold text-sm text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-plane-flight text-orange-400"></i>
+                            <span id="awayRosterTitle">Away Team Setup</span>
+                        </h3>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Team Name</label>
+                            <input type="text" id="awayTeamNameInput" value="Away Titans" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Color</label>
+                            <input type="color" id="awayTeamColorInput" value="#38bdf8" class="w-full h-8 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer p-0.5">
+                        </div>
+                    </div>
+
+                    <div id="awayRosterInputBlock" class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <span class="text-[11px] font-bold text-slate-300">Add Player to Away Roster</span>
+                        <div class="flex space-x-2">
+                            <input type="number" id="newAwayJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
+                            <input type="text" id="newAwayName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            <button onclick="addPlayerToRoster('away')" class="action-btn bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1" id="awayRosterList"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="saveRosterChanges()" class="action-btn bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg">
+                    Save Roster & Setup Changes
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== 4. SAVED MATCHES TAB ==================== -->
+        <section id="view-matches" class="tab-view hidden space-y-6">
+            <div class="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-box-archive text-orange-400"></i>
+                            <span>Saved Matches Archive (IndexedDB)</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Matches persist entirely offline on device storage.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2" id="savedMatchesContainer"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CONFIRM ADVANCE QUARTER MODAL -->
+    <div id="advanceQuarterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
+            <div class="w-12 h-12 bg-amber-950/80 border border-amber-800 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-forward-step"></i>
+            </div>
+            <h4 class="font-bold text-base text-white">Advance Quarter & Purge Flagged?</h4>
+            <p class="text-xs text-slate-300" id="advanceQuarterText">End current quarter and advance? Any play log items flagged for deletion will be permanently purged and stats reverted.</p>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeAdvanceQuarterModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold border border-slate-700">Cancel</button>
+                <button onclick="confirmAdvanceQuarter()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-xl text-xs font-bold shadow-lg">Confirm & Advance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM NOTICE MODAL -->
+    <div id="msgModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
+            <div class="w-12 h-12 bg-orange-950/80 border border-orange-800 text-orange-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-circle-info" id="msgModalIcon"></i>
+            </div>
+            <h4 class="font-bold text-base text-white" id="msgModalTitle">Notice</h4>
+            <p class="text-xs text-slate-300" id="msgModalText">Message text goes here.</p>
+            <button onclick="closeMsgModal()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-xl text-xs font-bold">OK</button>
+        </div>
+    </div>
+
+    <!-- External JavaScript Application Code -->
+    <script src="app.js"></script>
+</body>
+</html>
