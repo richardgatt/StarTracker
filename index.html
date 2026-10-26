@@ -4,19 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>StarTracker - Basketball Box Score Tracker</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Court-side Basketball Box Score Tracker & Live Analytics PWA">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        court: { bg: '#090d16', card: '#131c2e', border: '#1e293b' }
+                        court: {
+                            bg: '#090d16',
+                            card: '#131c2e',
+                            border: '#1e2d4a',
+                            orange: '#f97316',
+                            gold: '#fbbf24',
+                            accent: '#38bdf8'
+                        }
                     },
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
@@ -27,148 +42,208 @@
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #090d16; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e2d4a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f97316;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Interactive Feedback & Animations */
         .stat-btn {
-            transition: transform 0.05s ease, filter 0.15s ease;
+            transition: transform 0.05s ease, background-color 0.15s ease, border-color 0.15s ease;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
-        .stat-btn:active { transform: scale(0.95); filter: brightness(1.2); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .flagged-del { text-decoration: line-through; background-color: rgba(225, 29, 72, 0.2) !important; color: #fecdd3 !important; }
+        .stat-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* Drag & Drop Visual Styles */
+        .draggable-bench {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+        .draggable-bench:active {
+            cursor: grabbing;
+        }
+        .drag-over-court {
+            border-color: #f97316 !important;
+            background-color: rgba(249, 115, 22, 0.15) !important;
+            transform: scale(1.02);
+        }
+
+        /* Flagged for deletion animation/strike */
+        .flagged-entry {
+            background-color: rgba(225, 29, 72, 0.2) !important;
+            border-color: rgba(225, 29, 72, 0.5) !important;
+            text-decoration: line-through;
+            opacity: 0.75;
+        }
+
+        /* Uniform squarish 7-column grid layout */
+        .action-grid-7 {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 0.35rem;
+        }
     </style>
 </head>
-<body class="bg-[#090d16] text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
 
-    <!-- TOP NAVIGATION HEADER -->
-    <header class="bg-slate-950 border-b border-slate-800 sticky top-0 z-40 px-4 py-2.5 shadow-lg">
+    <!-- TOP APPLICATION HEADER -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-3 py-2.5 shadow-xl">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-orange-600 to-amber-500 p-2 rounded-xl text-white shadow-md shadow-orange-950/50">
-                    <i class="fa-solid fa-basketball text-xl"></i>
+            <div class="flex items-center space-x-2.5">
+                <div class="bg-gradient-to-tr from-orange-600 via-amber-500 to-yellow-400 p-2 rounded-xl text-slate-950 font-black shadow-lg shadow-orange-950/40">
+                    <i class="fa-solid fa-star text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-black text-lg md:text-xl tracking-tight leading-none bg-gradient-to-r from-orange-400 to-amber-200 bg-clip-text text-transparent">
-                        StarTracker <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-950 text-orange-400 font-semibold border border-orange-800/50">PRO</span>
+                    <h1 class="font-black text-lg md:text-xl tracking-tight leading-none bg-gradient-to-r from-orange-400 via-amber-300 to-yellow-200 bg-clip-text text-transparent">
+                        StarTracker <span class="text-[10px] px-1.5 py-0.5 rounded bg-orange-950/80 text-orange-400 font-bold border border-orange-800/50">PRO</span>
                     </h1>
-                    <p class="text-[10px] text-slate-400 font-medium">Court-Side Live Box Score Tracker</p>
+                    <p class="text-[10px] text-slate-400 font-medium hidden sm:block">Basketball Box Score & Live Event Tracking</p>
                 </div>
             </div>
 
-            <!-- Offline & Cloud Status Indicator -->
-            <div class="flex items-center space-x-3 text-xs">
+            <!-- Sync & Network Status -->
+            <div class="flex items-center space-x-2 text-xs">
                 <div id="offlineIndicator" class="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     <i class="fa-solid fa-wifi text-[10px]"></i>
-                    <span class="font-medium hidden sm:inline" id="connectionText">Online</span>
+                    <span class="font-medium text-[11px] hidden sm:inline" id="connectionText">Online</span>
                 </div>
-                <div id="syncBadge" class="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-900 text-slate-300 border border-slate-800">
+                <div id="syncBadge" class="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                     <i class="fa-solid fa-database text-[10px] text-orange-400"></i>
-                    <span class="font-medium text-xs" id="unsyncedCount">0 Unsynced</span>
+                    <span class="font-medium text-[11px]" id="unsyncedCount">0 Unsynced</span>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- TAB NAVIGATION BAR -->
-    <nav class="bg-slate-950/90 backdrop-blur-md border-b border-slate-800 sticky top-[53px] z-30">
+    <nav class="bg-slate-900 border-b border-slate-800 sticky top-[49px] z-30 shadow-md">
         <div class="max-w-7xl mx-auto flex overflow-x-auto no-scrollbar px-2">
-            <button onclick="switchTab('tracker')" id="tab-tracker" class="tab-btn flex-1 min-w-[100px] py-2.5 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-orange-500 text-orange-400 flex justify-center items-center space-x-2">
-                <i class="fa-solid fa-stopwatch text-base"></i>
+            <button onclick="switchTab('tracker')" id="tab-tracker" class="tab-btn flex-1 min-w-[110px] py-3 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-orange-500 text-orange-400 flex justify-center items-center space-x-2 transition">
+                <i class="fa-solid fa-play text-xs"></i>
                 <span>Live Tracker</span>
             </button>
-            <button onclick="switchTab('boxscore')" id="tab-boxscore" class="tab-btn flex-1 min-w-[100px] py-2.5 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2">
-                <i class="fa-solid fa-table-list text-base"></i>
+            <button onclick="switchTab('boxscore')" id="tab-boxscore" class="tab-btn flex-1 min-w-[110px] py-3 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2 transition">
+                <i class="fa-solid fa-table-cells text-xs"></i>
                 <span>Box Score</span>
             </button>
-            <button onclick="switchTab('roster')" id="tab-roster" class="tab-btn flex-1 min-w-[100px] py-2.5 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2">
-                <i class="fa-solid fa-users text-base"></i>
-                <span>Setup & Teams</span>
+            <button onclick="switchTab('roster')" id="tab-roster" class="tab-btn flex-1 min-w-[110px] py-3 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2 transition">
+                <i class="fa-solid fa-sliders text-xs"></i>
+                <span>Setup / Teams</span>
             </button>
-            <button onclick="switchTab('matches')" id="tab-matches" class="tab-btn flex-1 min-w-[100px] py-2.5 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2">
-                <i class="fa-solid fa-folder-open text-base"></i>
-                <span>Saved & Export</span>
+            <button onclick="switchTab('matches')" id="tab-matches" class="tab-btn flex-1 min-w-[110px] py-3 px-3 text-center text-xs md:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex justify-center items-center space-x-2 transition">
+                <i class="fa-solid fa-folder-open text-xs"></i>
+                <span>Archive & Sync</span>
             </button>
         </div>
     </nav>
 
-    <!-- MAIN CONTAINER -->
+    <!-- MAIN APP CONTAINER -->
     <main class="max-w-7xl mx-auto w-full flex-grow p-2 sm:p-4 space-y-4">
 
-        <!-- ==================== 1. LIVE TRACKER TAB ==================== -->
+        <!-- ========================================================================= -->
+        <!-- 1. LIVE GAME TRACKER VIEW                                                -->
+        <!-- ========================================================================= -->
         <section id="view-tracker" class="tab-view space-y-4">
             
-            <!-- TOP SCOREBOARD BANNER -->
-            <div class="bg-[#0f172a] rounded-2xl p-3 border border-slate-800 shadow-2xl relative overflow-hidden">
-                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-orange-500 via-amber-500 to-sky-500"></div>
+            <!-- TOP INFO BAR / SCOREBOARD -->
+            <div class="bg-slate-900/90 rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-sky-500"></div>
 
                 <div class="grid grid-cols-12 gap-2 items-center">
                     
-                    <!-- HOME TEAM SCOREBOARD CARD -->
-                    <div class="col-span-5 bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex justify-between items-center shadow-inner">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 rounded-full inline-block shadow" id="homeColorBadge"></span>
-                                <h2 class="text-xs sm:text-base font-black tracking-tight text-slate-100 uppercase" id="homeScoreName">HOME WARRIORS</h2>
+                    <!-- HOME TEAM SCORE PANEL -->
+                    <div class="col-span-5 sm:col-span-5 flex items-center justify-between bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                        <!-- Left Aligned Name & Score -->
+                        <div class="text-left space-y-0.5">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3 h-3 rounded-full inline-block shadow-sm" id="homeColorBadge"></span>
+                                <h2 class="text-xs sm:text-lg font-black tracking-tight truncate text-white" id="homeScoreName">HOME WARRIORS</h2>
                             </div>
-                            <div class="text-4xl sm:text-5xl font-black font-mono text-white tracking-tight" id="homeScore">
+                            <div class="text-3xl sm:text-5xl font-black font-mono tracking-tight text-white leading-none" id="homeScore">
                                 0
                             </div>
                         </div>
 
-                        <div class="text-right space-y-2">
-                            <div>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">FOULS: <span id="homeFouls" class="text-rose-400 font-mono text-sm font-black">0</span></span>
+                        <!-- Right Aligned Fouls & Timeouts -->
+                        <div class="text-right space-y-1 pl-2">
+                            <div class="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                FOULS: <span id="homeFouls" class="text-amber-400 font-mono text-xs sm:text-sm font-black">0</span>
                             </div>
-                            <div>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">TIMEOUT</span>
-                                <div class="flex items-center space-x-1 justify-end cursor-pointer" onclick="toggleTimeout('home')" title="Tap to toggle Home Timeout">
-                                    <span id="homeTo1" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="homeTo2" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="homeTo3" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="homeTo4" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
+                            <!-- Timeout Dim Green Circles -->
+                            <div class="flex items-center space-x-1 justify-end cursor-pointer" onclick="toggleTimeout('home')" title="Tap to toggle Home Timeout">
+                                <span class="text-[9px] font-bold text-slate-500 mr-1 hidden sm:inline">TIMEOUT</span>
+                                <div id="homeTimeoutDots" class="flex space-x-1">
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- COMBINED QUARTER NUMBER & ADVANCE QTR BUTTON -->
-                    <div class="col-span-2 flex flex-col items-center justify-center">
-                        <button onclick="promptAdvanceQuarter()" class="w-full py-2.5 px-1 bg-gradient-to-b from-orange-600 to-amber-700 hover:from-orange-500 hover:to-amber-600 text-white rounded-2xl border-2 border-orange-400/80 shadow-lg shadow-orange-950/60 transition active:scale-95 flex flex-col items-center justify-center group">
-                            <span class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white drop-shadow" id="periodDisplay">Q1</span>
-                            <span class="text-[9px] sm:text-[11px] font-bold text-orange-200 uppercase tracking-wider flex items-center mt-0.5 group-hover:text-white">
-                                Advance QTR <i class="fa-solid fa-angles-right ml-1 text-[8px]"></i>
-                            </span>
+                    <!-- CENTER QUARTER STATUS & ADVANCE BUTTON -->
+                    <div class="col-span-2 sm:col-span-2 flex flex-col items-center justify-center space-y-1 text-center">
+                        <span class="text-[11px] sm:text-sm font-black uppercase tracking-wider text-orange-400 bg-orange-950/70 px-2.5 py-1 rounded-lg border border-orange-800/50 shadow-inner" id="periodDisplay">
+                            Q1
+                        </span>
+                        
+                        <button onclick="requestAdvanceQuarter()" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-extrabold shadow-md active:scale-95 transition flex items-center space-x-1 border border-amber-500/30">
+                            <span>Advance Qtr</span>
+                            <i class="fa-solid fa-angles-right text-[9px] sm:text-[10px]"></i>
                         </button>
                     </div>
 
-                    <!-- AWAY TEAM SCOREBOARD CARD -->
-                    <div class="col-span-5 bg-slate-900/90 rounded-xl p-3 border border-slate-800 flex justify-between items-center shadow-inner">
-                        <div class="space-y-1">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-3 h-3 rounded-full inline-block shadow" id="awayColorBadge"></span>
-                                <h2 class="text-xs sm:text-base font-black tracking-tight text-slate-100 uppercase" id="awayScoreName">AWAY TITANS</h2>
+                    <!-- AWAY TEAM SCORE PANEL (Always Visible, Masked with '--' & '-' in single team mode) -->
+                    <div id="awayHeaderPanel" class="col-span-5 sm:col-span-5 flex items-center justify-between bg-slate-950/70 p-2.5 rounded-xl border border-slate-800/80">
+                        <!-- Left Aligned Name & Score -->
+                        <div class="text-left space-y-0.5">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3 h-3 rounded-full inline-block shadow-sm" id="awayColorBadge"></span>
+                                <h2 class="text-xs sm:text-lg font-black tracking-tight truncate text-white" id="awayScoreName">AWAY TITANS</h2>
                             </div>
-                            <div class="text-4xl sm:text-5xl font-black font-mono text-white tracking-tight" id="awayScore">
+                            <div class="text-3xl sm:text-5xl font-black font-mono tracking-tight text-white leading-none" id="awayScore">
                                 0
                             </div>
                         </div>
 
-                        <div class="text-right space-y-2">
-                            <div>
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">FOULS: <span id="awayFouls" class="text-rose-400 font-mono text-sm font-black">0</span></span>
+                        <!-- Right Aligned Fouls & Timeouts -->
+                        <div class="text-right space-y-1 pl-2">
+                            <div class="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider">
+                                FOULS: <span id="awayFouls" class="text-amber-400 font-mono text-xs sm:text-sm font-black">0</span>
                             </div>
-                            <div>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">TIMEOUT</span>
-                                <div class="flex items-center space-x-1 justify-end cursor-pointer" onclick="toggleTimeout('away')" title="Tap to toggle Away Timeout">
-                                    <span id="awayTo1" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="awayTo2" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="awayTo3" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
-                                    <span id="awayTo4" class="w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800 transition-all"></span>
+                            <!-- Timeout Dim Green Circles -->
+                            <div class="flex items-center space-x-1 justify-end cursor-pointer" onclick="toggleTimeout('away')" title="Tap to toggle Away Timeout">
+                                <span class="text-[9px] font-bold text-slate-500 mr-1 hidden sm:inline">TIMEOUT</span>
+                                <div id="awayTimeoutDots" class="flex space-x-1">
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
+                                    <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
                                 </div>
                             </div>
                         </div>
@@ -177,37 +252,102 @@
                 </div>
             </div>
 
-            <!-- ACTIVE PLAYERS & INTEGRATED BENCH SUBSTITUTES SECTION -->
-            <div id="courtSectionContainer" class="space-y-4">
-                <!-- Dynamically Populated by Render Functions -->
+            <!-- ACTIVE PLAYERS & ACTION MATRIX CONTAINER -->
+            <div id="courtGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- HOME TEAM ACTIVE PLAYERS -->
+                <div id="homeCourtSection" class="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full" id="homeCourtBadge"></span>
+                            <h3 class="font-extrabold text-sm text-slate-100" id="homeCourtTitle">Home On-Court Players</h3>
+                        </div>
+                        <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active</span>
+                    </div>
+
+                    <!-- Active Players Cards List (Dynamic Side-by-Side grid layout) -->
+                    <div id="homeActiveList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- BENCH SUBSTITUTES PANEL (Drag source / Tap fallback) -->
+                    <div id="homeBenchSection" class="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800/80 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-300 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-chair text-amber-500"></i>
+                                <span>Bench Substitutes</span>
+                            </span>
+                            <span class="text-[10px] text-slate-500">Drag to sub or tap</span>
+                        </div>
+                        <div id="homeBenchList" class="flex flex-wrap gap-1.5">
+                            <!-- Bench items -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AWAY TEAM ACTIVE PLAYERS (Hidden if single team mode) -->
+                <div id="awayCourtSection" class="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full" id="awayCourtBadge"></span>
+                            <h3 class="font-extrabold text-sm text-slate-100" id="awayCourtTitle">Away On-Court Players</h3>
+                        </div>
+                        <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active</span>
+                    </div>
+
+                    <!-- Active Players Cards List -->
+                    <div id="awayActiveList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- BENCH SUBSTITUTES PANEL -->
+                    <div id="awayBenchSection" class="bg-slate-950/80 rounded-xl p-2.5 border border-slate-800/80 space-y-2">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-300 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-chair text-amber-500"></i>
+                                <span>Bench Substitutes</span>
+                            </span>
+                            <span class="text-[10px] text-slate-500">Drag to sub or tap</span>
+                        </div>
+                        <div id="awayBenchList" class="flex flex-wrap gap-1.5">
+                            <!-- Bench items -->
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- RECENT PLAY-BY-PLAY FEED -->
-            <div class="bg-slate-900/90 rounded-2xl p-3.5 border border-slate-800 shadow-md">
-                <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-800">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-2">
+            <!-- RECENT PLAY LOG FEED WITH UNDO & FLAG FOR DELETION -->
+            <div class="bg-slate-900/90 rounded-2xl p-3 sm:p-4 border border-slate-800 shadow-xl space-y-2">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
                         <i class="fa-solid fa-list-ul text-orange-400"></i>
                         <span>Recent Play Log</span>
                     </h3>
-                    <button onclick="undoLastPlay()" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3 py-1 rounded-lg border border-slate-700 active:scale-95 transition flex items-center space-x-1.5">
-                        <i class="fa-solid fa-rotate-left"></i>
+                    
+                    <!-- Protected Undo Button inside Log Header -->
+                    <button onclick="undoLastPlay()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 px-3 py-1 rounded-lg text-xs font-bold transition active:scale-95 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rotate-left text-xs"></i>
                         <span>Undo Last Play</span>
                     </button>
                 </div>
-                <div id="playLogContainer" class="max-h-44 overflow-y-auto space-y-1 text-xs pr-1">
-                    <div class="text-slate-500 italic text-center py-2">No plays recorded for Q1 yet.</div>
+
+                <div id="playLogContainer" class="max-h-44 overflow-y-auto space-y-1.5 text-xs pr-1">
+                    <div class="text-slate-500 italic text-center py-3">No play actions logged in this quarter yet.</div>
                 </div>
             </div>
         </section>
 
-        <!-- ==================== 2. BOX SCORE TAB ==================== -->
+        <!-- ========================================================================= -->
+        <!-- 2. DETAILED LIVE BOX SCORE TAB                                           -->
+        <!-- ========================================================================= -->
         <section id="view-boxscore" class="tab-view hidden space-y-6">
             
-            <!-- QUARTER BREAKDOWN SUMMARY CARD -->
-            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl overflow-x-auto">
-                <h3 class="text-sm font-bold text-slate-200 mb-3 flex items-center space-x-2">
+            <!-- QUARTER SUMMARY CARD -->
+            <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl overflow-x-auto">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center space-x-2">
                     <i class="fa-solid fa-chart-pie text-orange-400"></i>
-                    <span>Quarter-by-Quarter Summary</span>
+                    <span>Quarter Breakdown Summary</span>
                 </h3>
                 <table class="w-full text-center text-xs">
                     <thead>
@@ -218,26 +358,26 @@
                             <th class="py-2 px-2">Q3</th>
                             <th class="py-2 px-2">Q4</th>
                             <th class="py-2 px-2">OT</th>
-                            <th class="py-2 px-2 font-bold text-orange-400">TOTAL</th>
+                            <th class="py-2 px-2 font-black text-orange-400">TOTAL</th>
                         </tr>
                     </thead>
-                    <tbody id="quarterSummaryBody" class="divide-y divide-slate-800/60 font-mono font-semibold">
+                    <tbody id="quarterSummaryBody" class="divide-y divide-slate-800/60 font-mono font-bold">
                         <!-- Populated by JS -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- HOME TEAM BOX SCORE TABLE -->
-            <div id="homeBoxScoreContainer" class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <!-- HOME BOX SCORE TABLE -->
+            <div id="homeBoxSection" class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <span class="w-3 h-3 rounded-full" id="homeBoxBadge"></span>
-                        <h3 class="font-bold text-base text-white" id="homeBoxTitle">Home Team Box Score</h3>
+                        <h3 class="font-extrabold text-sm sm:text-base text-white" id="homeBoxTitle">Home Team Box Score</h3>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left font-mono">
-                        <thead class="text-[11px] text-slate-400 bg-slate-950/80 uppercase">
+                        <thead class="text-[11px] text-slate-400 bg-slate-950 uppercase border-b border-slate-800">
                             <tr>
                                 <th class="p-2">#</th>
                                 <th class="p-2 min-w-[120px]">Player</th>
@@ -259,24 +399,24 @@
                         <tbody id="homeBoxScoreBody" class="divide-y divide-slate-800/50">
                             <!-- Populated by JS -->
                         </tbody>
-                        <tfoot id="homeBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-800">
+                        <tfoot id="homeBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-700">
                             <!-- Populated by JS -->
                         </tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- AWAY TEAM BOX SCORE TABLE -->
-            <div id="awayBoxScoreContainer" class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <!-- AWAY BOX SCORE TABLE (Hidden when single team mode) -->
+            <div id="awayBoxSection" class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center space-x-2">
                         <span class="w-3 h-3 rounded-full" id="awayBoxBadge"></span>
-                        <h3 class="font-bold text-base text-white" id="awayBoxTitle">Away Team Box Score</h3>
+                        <h3 class="font-extrabold text-sm sm:text-base text-white" id="awayBoxTitle">Away Team Box Score</h3>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left font-mono">
-                        <thead class="text-[11px] text-slate-400 bg-slate-950/80 uppercase">
+                        <thead class="text-[11px] text-slate-400 bg-slate-950 uppercase border-b border-slate-800">
                             <tr>
                                 <th class="p-2">#</th>
                                 <th class="p-2 min-w-[120px]">Player</th>
@@ -298,7 +438,7 @@
                         <tbody id="awayBoxScoreBody" class="divide-y divide-slate-800/50">
                             <!-- Populated by JS -->
                         </tbody>
-                        <tfoot id="awayBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-800">
+                        <tfoot id="awayBoxScoreFoot" class="bg-slate-950 font-bold border-t-2 border-slate-700">
                             <!-- Populated by JS -->
                         </tfoot>
                     </table>
@@ -306,67 +446,70 @@
             </div>
 
             <!-- EXPORT & REPORT BAR -->
-            <div class="flex flex-wrap gap-2 justify-end">
-                <button onclick="copyBoxScoreReport()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-semibold border border-slate-700 flex items-center space-x-2">
+            <div class="flex flex-wrap gap-2 justify-end pt-2">
+                <button onclick="copyBoxScoreReport()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold border border-slate-700 flex items-center space-x-2 transition">
                     <i class="fa-solid fa-copy text-orange-400"></i>
                     <span>Copy Text Summary</span>
                 </button>
-                <button onclick="exportGameCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md flex items-center space-x-2">
+                <button onclick="exportGameCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
                     <i class="fa-solid fa-file-csv"></i>
                     <span>Export CSV</span>
                 </button>
-                <button onclick="exportGameJSON()" class="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md flex items-center space-x-2">
+                <button onclick="exportGameJSON()" class="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
                     <i class="fa-solid fa-file-code"></i>
                     <span>Export JSON</span>
                 </button>
             </div>
         </section>
 
-        <!-- ==================== 3. SETUP / ROSTER TAB ==================== -->
+        <!-- ========================================================================= -->
+        <!-- 3. SETUP & TEAM ROSTER MANAGEMENT TAB                                    -->
+        <!-- ========================================================================= -->
         <section id="view-roster" class="tab-view hidden space-y-6">
             
-            <!-- TRACKING MODE SELECTION OPTIONS -->
-            <div class="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-4">
-                <h3 class="text-base font-bold text-white border-b border-slate-800 pb-2 flex items-center space-x-2">
+            <!-- TRACKING MODE SWITCHER -->
+            <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
+                <h3 class="text-sm font-bold text-white border-b border-slate-800 pb-2 flex items-center space-x-2">
                     <i class="fa-solid fa-sliders text-orange-400"></i>
-                    <span>Tracking & Setup Preferences</span>
+                    <span>Tracking Mode & Options</span>
                 </h3>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                    <!-- Hide Opponent Slider Switch -->
-                    <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Hide Opponent Option Slider -->
+                    <div class="flex items-center justify-between bg-slate-950/70 p-3 rounded-xl border border-slate-800">
                         <div>
-                            <span class="text-xs font-bold text-white block">Hide Opponent (Single Team Tracking)</span>
-                            <span class="text-[10px] text-slate-400">Tracks stats for designated "My Team" only</span>
+                            <span class="text-xs font-extrabold text-white block">Hide Opponent</span>
+                            <span class="text-[10px] text-slate-400">Track stats for single team only</span>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="toggleHideOpponent" class="sr-only peer" onchange="toggleSingleTeamMode(this.checked)" checked>
-                            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                            <input type="checkbox" id="hideOpponentToggle" checked onchange="toggleSingleTeamMode()" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                         </label>
                     </div>
 
-                    <!-- My Team Selector Dropdown -->
-                    <div id="myTeamSelectorContainer" class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                        <label class="block text-xs font-bold text-white mb-1">Select "My Team"</label>
-                        <select id="myTeamSelect" onchange="changeMyTeamSelection(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-orange-500 font-bold">
+                    <!-- Select My Team Dropdown -->
+                    <div id="myTeamSelectorBox" class="flex flex-col justify-center bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+                        <label class="text-xs font-extrabold text-white mb-1">Select "My Team"</label>
+                        <select id="myTeamChoice" onchange="onMyTeamChoiceChanged()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 font-bold focus:outline-none focus:border-orange-500">
                             <option value="home">Home Team</option>
                             <option value="away">Away Team</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="pt-2">
+                <div class="pt-2 flex justify-start">
                     <button onclick="createNewGamePrompt()" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-2">
                         <i class="fa-solid fa-plus-circle"></i>
-                        <span>Start New Match / Reset Match</span>
+                        <span>Reset Match / New Game</span>
                     </button>
                 </div>
             </div>
 
-            <!-- HOME & AWAY ROSTER EDITING & SAVING PANELS -->
+            <!-- TEAMS & ROSTER EDITING PANELS -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- HOME TEAM ROSTER PANEL -->
-                <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
+                
+                <!-- HOME TEAM PANEL -->
+                <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                             <i class="fa-solid fa-house text-orange-400"></i>
@@ -385,37 +528,37 @@
                         </div>
                     </div>
 
-                    <!-- Team File Management Actions -->
-                    <div class="flex items-center space-x-2 py-1">
-                        <button onclick="openSaveTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1">
-                            <i class="fa-solid fa-floppy-disk"></i> <span>Save Team</span>
+                    <!-- SAVE / LOAD / DELETE BUTTONS FOR HOME TEAM -->
+                    <div class="flex items-center space-x-1.5 pt-1">
+                        <button onclick="openSaveTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Save Team
                         </button>
-                        <button onclick="openLoadTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1">
-                            <i class="fa-solid fa-folder-open"></i> <span>Load Team</span>
+                        <button onclick="openLoadTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-folder-open mr-1"></i> Load Team
                         </button>
-                        <button id="btnDeleteHomeTeam" onclick="deleteLoadedTeam('home')" disabled class="px-3 bg-slate-950 text-slate-600 border border-slate-800 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-rose-400">
+                        <button id="btnDeleteHomeTeam" disabled onclick="requestDeleteLoadedTeam('home')" class="bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
 
-                    <!-- Add Player Form -->
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <!-- Add Player Inputs -->
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
                         <span class="text-[11px] font-bold text-slate-300 block">Add Player to Home Roster</span>
                         <div class="flex space-x-2">
                             <input type="number" id="newHomeJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
-                            <input type="text" id="newHomeName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            <input type="text" id="newHomeName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
                             <button onclick="addPlayerToRoster('home')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
                         </div>
                     </div>
 
-                    <!-- Player Roster List -->
-                    <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1" id="homeRosterList">
+                    <!-- Player List -->
+                    <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1" id="homeRosterList">
                         <!-- Populated by JS -->
                     </div>
                 </div>
 
-                <!-- AWAY TEAM ROSTER PANEL -->
-                <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
+                <!-- AWAY TEAM PANEL -->
+                <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                             <i class="fa-solid fa-plane-flight text-orange-400"></i>
@@ -434,81 +577,83 @@
                         </div>
                     </div>
 
-                    <!-- Team File Management Actions -->
-                    <div class="flex items-center space-x-2 py-1">
-                        <button onclick="openSaveTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1">
-                            <i class="fa-solid fa-floppy-disk"></i> <span>Save Team</span>
+                    <!-- SAVE / LOAD / DELETE BUTTONS FOR AWAY TEAM -->
+                    <div class="flex items-center space-x-1.5 pt-1">
+                        <button onclick="openSaveTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-floppy-disk mr-1"></i> Save Team
                         </button>
-                        <button onclick="openLoadTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1">
-                            <i class="fa-solid fa-folder-open"></i> <span>Load Team</span>
+                        <button onclick="openLoadTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-folder-open mr-1"></i> Load Team
                         </button>
-                        <button id="btnDeleteAwayTeam" onclick="deleteLoadedTeam('away')" disabled class="px-3 bg-slate-950 text-slate-600 border border-slate-800 py-1.5 rounded-lg text-[11px] font-bold flex justify-center items-center space-x-1 disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:text-rose-400">
+                        <button id="btnDeleteAwayTeam" disabled onclick="requestDeleteLoadedTeam('away')" class="bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
 
-                    <!-- Add Player Form -->
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <!-- Add Player Inputs -->
+                    <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
                         <span class="text-[11px] font-bold text-slate-300 block">Add Player to Away Roster</span>
                         <div class="flex space-x-2">
                             <input type="number" id="newAwayJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
-                            <input type="text" id="newAwayName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                            <input type="text" id="newAwayName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
                             <button onclick="addPlayerToRoster('away')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
                         </div>
                     </div>
 
-                    <!-- Player Roster List -->
-                    <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1" id="awayRosterList">
+                    <!-- Player List -->
+                    <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1" id="awayRosterList">
                         <!-- Populated by JS -->
                     </div>
                 </div>
+
             </div>
 
-            <div class="flex justify-end">
-                <button onclick="saveRosterChanges()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg">
-                    Save Roster & Setup Changes
+            <div class="flex justify-end pt-2">
+                <button onclick="saveRosterChanges()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition">
+                    Apply Roster Changes
                 </button>
             </div>
         </section>
 
-        <!-- ==================== 4. SAVED MATCHES & SYNC TAB ==================== -->
+        <!-- ========================================================================= -->
+        <!-- 4. SAVED MATCH ARCHIVE & CLOUD SYNC TAB                                  -->
+        <!-- ========================================================================= -->
         <section id="view-matches" class="tab-view hidden space-y-6">
             
-            <!-- CLOUD SYNC CONTROL PANEL -->
-            <div class="bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-4">
+            <div class="bg-slate-900/90 rounded-2xl p-4 sm:p-6 border border-slate-800 shadow-xl space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                     <div>
                         <h3 class="text-base font-bold text-white flex items-center space-x-2">
                             <i class="fa-solid fa-cloud-arrow-up text-orange-400"></i>
-                            <span>Offline Storage & Cloud Sync Status</span>
+                            <span>Offline Database & Cloud Storage Sync</span>
                         </h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Match logs and team configurations saved directly on local IndexedDB.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Games stored securely in IndexedDB on your mobile device.</p>
                     </div>
-                    <button onclick="triggerCloudSync()" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2">
+                    <button onclick="triggerCloudSync()" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
                         <i class="fa-solid fa-rotate"></i>
-                        <span>Sync Now</span>
+                        <span>Sync Cloud</span>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
                         <span class="text-2xl font-black text-white font-mono" id="statLocalMatches">0</span>
-                        <span class="block text-[11px] text-slate-400 font-medium uppercase mt-0.5">Local Matches Saved</span>
+                        <span class="block text-[11px] text-slate-400 font-bold uppercase mt-0.5">Saved Games</span>
                     </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
                         <span class="text-2xl font-black text-amber-400 font-mono" id="statPendingSync">0</span>
-                        <span class="block text-[11px] text-slate-400 font-medium uppercase mt-0.5">Pending Upload</span>
+                        <span class="block text-[11px] text-slate-400 font-bold uppercase mt-0.5">Pending Upload</span>
                     </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800">
                         <span class="text-2xl font-black text-emerald-400 font-mono" id="statSyncedMatches">0</span>
-                        <span class="block text-[11px] text-slate-400 font-medium uppercase mt-0.5">Successfully Synced</span>
+                        <span class="block text-[11px] text-slate-400 font-bold uppercase mt-0.5">Cloud Synced</span>
                     </div>
                 </div>
             </div>
 
-            <!-- SAVED MATCHES ARCHIVE -->
-            <div class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-                <h3 class="text-sm font-bold text-slate-200 flex items-center space-x-2">
+            <!-- MATCH HISTORY ARCHIVE -->
+            <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
                     <i class="fa-solid fa-box-archive text-orange-400"></i>
                     <span>Match History Archive</span>
                 </h3>
@@ -521,110 +666,119 @@
 
     </main>
 
-    <!-- MODAL 1: ADVANCE QUARTER & END MATCH CONFIRMATION MODAL -->
-    <div id="advanceQtrModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
-            <div class="w-12 h-12 bg-orange-950/80 border border-orange-800 text-orange-400 rounded-full flex items-center justify-center mx-auto text-xl">
-                <i class="fa-solid fa-forward-step"></i>
+    <!-- ========================================================================= -->
+    <!-- MODAL DIALOGS                                                             -->
+    <!-- ========================================================================= -->
+
+    <!-- QUARTER ADVANCE & END MATCH MODAL -->
+    <div id="advanceQuarterModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-amber-950/80 border border-amber-800 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-angles-right"></i>
             </div>
-            <div>
-                <h4 class="font-black text-lg text-white" id="advanceModalTitle">Advance Quarter?</h4>
-                <p class="text-xs text-slate-400 mt-1" id="advanceModalText">Are you sure you want to proceed to the next quarter? All flagged deletions will be purged.</p>
+            <div class="text-center">
+                <h4 class="font-extrabold text-base text-white" id="advanceModalTitle">Advance Quarter?</h4>
+                <p class="text-xs text-slate-400 mt-1" id="advanceModalText">This will purge all flagged play entries and roll back stats.</p>
             </div>
-
-            <div class="space-y-2 pt-2">
-                <button onclick="confirmAdvanceQuarter()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2.5 rounded-xl text-xs font-bold shadow-md">
-                    Confirm Quarter Advance
-                </button>
-
-                <!-- End Match Button (Visible Q4 Onwards) -->
-                <button id="btnEndMatchOption" onclick="confirmEndMatch()" class="w-full bg-rose-700 hover:bg-rose-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md hidden">
-                    <i class="fa-solid fa-flag-checkered mr-1"></i> End Match & Save
-                </button>
-
-                <button onclick="closeAdvanceQtrModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-semibold">
-                    Cancel
-                </button>
+            <div class="flex flex-col space-y-2 pt-2" id="advanceModalButtons">
+                <!-- Dynamic Buttons -->
             </div>
         </div>
     </div>
 
-    <!-- MODAL 2: SAVE TEAM MODAL -->
+    <!-- SAVE TEAM MODAL -->
     <div id="saveTeamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <h4 class="font-black text-base text-white border-b border-slate-800 pb-2">Save Team File</h4>
-            <p class="text-xs text-slate-400">Choose whether to overwrite the currently loaded team or save as a new file.</p>
-            
-            <div class="space-y-3 pt-1">
-                <button onclick="executeSaveTeamOverwrite()" id="btnOverwriteTeam" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2.5 rounded-xl text-xs font-bold border border-slate-700 text-left px-3 flex justify-between items-center">
-                    <span>Overwrite Loaded Team File</span>
-                    <i class="fa-solid fa-rotate text-orange-400"></i>
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <h4 class="font-extrabold text-base text-white flex items-center space-x-2">
+                <i class="fa-solid fa-floppy-disk text-orange-400"></i>
+                <span>Save Team Lineup</span>
+            </h4>
+            <div class="space-y-3">
+                <button onclick="confirmOverwriteTeam()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-100 p-3 rounded-xl text-xs font-bold border border-slate-700 text-left flex justify-between items-center">
+                    <span>Overwrite Saved Team</span>
+                    <i class="fa-solid fa-rotate"></i>
                 </button>
-
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <label class="block text-xs font-bold text-slate-300">Save as New Team File</label>
-                    <input type="text" id="saveNewFilenameInput" placeholder="e.g., Warriors_Roster_2026" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white">
-                    <button onclick="executeSaveTeamNew()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded-xl text-xs font-bold mt-1">
-                        Save As New File
-                    </button>
-                </div>
+                <button onclick="promptSaveNewTeam()" class="w-full bg-orange-600 hover:bg-orange-500 text-white p-3 rounded-xl text-xs font-bold text-left flex justify-between items-center">
+                    <span>Save as New Saved Team</span>
+                    <i class="fa-solid fa-plus"></i>
+                </button>
             </div>
-
             <div class="flex justify-end pt-2">
-                <button onclick="closeSaveTeamModal()" class="bg-slate-800 text-slate-300 px-4 py-1.5 rounded-xl text-xs font-semibold">Cancel</button>
+                <button onclick="closeSaveTeamModal()" class="text-xs text-slate-400 hover:text-white">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 3: LOAD TEAM MODAL -->
+    <!-- NEW TEAM FILENAME MODAL -->
+    <div id="saveNewFilenameModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <h4 class="font-extrabold text-base text-white">Save Team As New</h4>
+            <p class="text-xs text-slate-400">Enter a unique filename/identifier for this lineup:</p>
+            <input type="text" id="saveFilenameInput" placeholder="e.g., Warriors_Roster_2026" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeSaveNewFilenameModal()" class="bg-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-semibold">Cancel</button>
+                <button onclick="executeSaveNewTeam()" class="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold">Save Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOAD TEAM MODAL -->
     <div id="loadTeamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-md w-full p-5 space-y-4 shadow-2xl">
-            <h4 class="font-black text-base text-white border-b border-slate-800 pb-2">Load Saved Team File</h4>
-            <div class="max-h-60 overflow-y-auto space-y-2 pr-1" id="savedTeamsListContainer">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h4 class="font-extrabold text-base text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-folder-open text-sky-400"></i>
+                    <span>Load Team Roster</span>
+                </h4>
+                <button onclick="closeLoadTeamModal()" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+            <div id="loadTeamListContainer" class="max-h-60 overflow-y-auto space-y-2 pr-1">
                 <!-- Populated dynamically -->
             </div>
-            <div class="flex justify-end pt-2">
+            <div class="flex justify-end pt-2 border-t border-slate-800">
                 <button onclick="closeLoadTeamModal()" class="bg-slate-800 text-slate-300 px-4 py-1.5 rounded-xl text-xs font-semibold">Cancel</button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 4: GENERIC NOTICE & CONFIRMATION MODAL -->
+    <!-- CONFIRMATION / NOTICE MODAL -->
     <div id="msgModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-sm w-full p-5 space-y-4 text-center shadow-2xl">
             <div class="w-12 h-12 bg-orange-950/80 border border-orange-800 text-orange-400 rounded-full flex items-center justify-center mx-auto text-xl">
                 <i class="fa-solid fa-info" id="msgModalIcon"></i>
             </div>
-            <h4 class="font-bold text-base text-white" id="msgModalTitle">Notice</h4>
+            <h4 class="font-extrabold text-base text-white" id="msgModalTitle">Notice</h4>
             <p class="text-xs text-slate-300" id="msgModalText">Message text goes here.</p>
-            <div class="flex space-x-2" id="msgModalButtons">
+            <div class="flex space-x-2 pt-2" id="msgModalButtons">
                 <button onclick="closeMsgModal()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded-xl text-xs font-bold">OK</button>
             </div>
         </div>
     </div>
 
-    <!-- JAVASCRIPT APPLICATION CODE -->
+    <!-- JAVASCRIPT LOGIC ENGINE -->
     <script>
         /**
          * =========================================================================
-         * GLOBAL APP STATE & INDEXED DB LOCAL STORAGE
+         * GLOBAL APPLICATION STATE & INDEXED DB INITIALIZATION
          * =========================================================================
          */
         const DB_NAME = 'StarTrackerDB';
         const DB_VERSION = 2;
         let db = null;
 
+        // Active Match State Object
         let currentGame = {
-            id: 'game_' + Date.now(),
+            id: 'match_' + Date.now(),
             date: new Date().toISOString(),
-            status: 'IN_PROGRESS',
+            status: 'IN_PROGRESS', // IN_PROGRESS, COMPLETED
             synced: false,
+            hideOpponent: true, // Hide opponent toggle setting
+            myTeamChoice: 'home', // 'home' or 'away'
             currentQuarter: 1,
-            hideOpponent: true,
-            myTeamSlot: 'home',
-            homeLoadedFilename: null,
-            awayLoadedFilename: null,
             homeTeam: {
+                filename: null, // Loaded file tag
                 name: "Home Warriors",
                 color: "#f97316",
                 timeoutsTaken: 0,
@@ -633,6 +787,7 @@
                 roster: []
             },
             awayTeam: {
+                filename: null,
                 name: "Away Titans",
                 color: "#38bdf8",
                 timeoutsTaken: 0,
@@ -640,12 +795,12 @@
                 scoreByQuarter: [0, 0, 0, 0],
                 roster: []
             },
-            events: []
+            events: [] // Detailed play-by-play events
         };
 
-        let targetTeamForSaveLoad = null;
+        let targetSaveTeamSlot = 'home'; // Modal context tracker
 
-        // Default Starter Roster Initializer
+        // Default Sample Roster Initializer
         function initDefaultRosters() {
             currentGame.homeTeam.roster = [
                 { id: 'h1', number: '30', name: 'Stephen C.', onCourt: true, stats: createEmptyStats() },
@@ -658,7 +813,7 @@
             ];
 
             currentGame.awayTeam.roster = [
-                { id: 'a1', number: '6', name: 'LeBron J.', onCourt: true, stats: createEmptyStats() },
+                { id: 'a1', number: '23', name: 'LeBron J.', onCourt: true, stats: createEmptyStats() },
                 { id: 'a2', number: '3', name: 'Anthony D.', onCourt: true, stats: createEmptyStats() },
                 { id: 'a3', number: '1', name: 'D\'Angelo R.', onCourt: true, stats: createEmptyStats() },
                 { id: 'a4', number: '15', name: 'Austin R.', onCourt: true, stats: createEmptyStats() },
@@ -675,18 +830,9 @@
             };
         }
 
-        function getTimestampWithMs() {
-            const now = new Date();
-            const hrs = String(now.getHours()).padStart(2, '0');
-            const mins = String(now.getMinutes()).padStart(2, '0');
-            const secs = String(now.getSeconds()).padStart(2, '0');
-            const ms = String(now.getMilliseconds()).padStart(3, '0');
-            return `${hrs}:${mins}:${secs}.${ms}`;
-        }
-
         /**
          * =========================================================================
-         * INDEXED DB PERSISTENCE & ONLINE STATUS
+         * INDEXED DB PERSISTENCE & OFFLINE WORKFLOWS
          * =========================================================================
          */
         function initDatabase() {
@@ -710,7 +856,7 @@
         }
 
         async function saveCurrentGameToStorage() {
-            localStorage.setItem('startracker_active_game', JSON.stringify(currentGame));
+            localStorage.setItem('startracker_active_match', JSON.stringify(currentGame));
             if (db) {
                 const tx = db.transaction('matches', 'readwrite');
                 tx.objectStore('matches').put(currentGame);
@@ -719,9 +865,13 @@
         }
 
         async function loadGameFromStorage() {
-            const saved = localStorage.getItem('startracker_active_game');
+            const saved = localStorage.getItem('startracker_active_match');
             if (saved) {
-                try { currentGame = JSON.parse(saved); } catch (e) { initDefaultRosters(); }
+                try {
+                    currentGame = JSON.parse(saved);
+                } catch (e) {
+                    initDefaultRosters();
+                }
             } else {
                 initDefaultRosters();
             }
@@ -740,13 +890,12 @@
                 text.innerText = "Offline Mode";
             }
         }
-
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
 
         /**
          * =========================================================================
-         * UI TABS & NAVIGATION
+         * TAB SWITCHING & INTERFACE NAVIGATION
          * =========================================================================
          */
         function switchTab(tabKey) {
@@ -761,93 +910,145 @@
             activeBtn.classList.remove('border-transparent', 'text-slate-400');
             activeBtn.classList.add('border-orange-500', 'text-orange-400');
 
-            if (tabKey === 'boxscore') renderBoxScoreTables();
-            else if (tabKey === 'matches') loadSavedMatchesList();
+            if (tabKey === 'boxscore') {
+                renderBoxScoreTables();
+            } else if (tabKey === 'matches') {
+                loadSavedMatchesList();
+            }
         }
 
         /**
          * =========================================================================
-         * TRACKING & SETUP PREFERENCES (HIDE OPPONENT & MY TEAM)
+         * DEVICE 24-HOUR TIMESTAMP GENERATOR
          * =========================================================================
          */
-        function toggleSingleTeamMode(enabled) {
-            currentGame.hideOpponent = enabled;
-            renderAllViews();
-            saveCurrentGameToStorage();
+        function getDeviceTimestampWithMs() {
+            const d = new Date();
+            const hrs = d.getHours().toString().padStart(2, '0');
+            const mins = d.getMinutes().toString().padStart(2, '0');
+            const secs = d.getSeconds().toString().padStart(2, '0');
+            const ms = d.getMilliseconds().toString().padStart(3, '0');
+            return `${hrs}:${mins}:${secs}.${ms}`;
         }
 
-        function changeMyTeamSelection(val) {
-            currentGame.myTeamSlot = val;
-            renderAllViews();
-            saveCurrentGameToStorage();
-        }
-
+        /**
+         * =========================================================================
+         * TIMEOUTS & SCOREBOARD INDICATOR CONTROLLER
+         * =========================================================================
+         */
         function toggleTimeout(teamKey) {
+            if (currentGame.hideOpponent && ((currentGame.myTeamChoice === 'home' && teamKey === 'away') || (currentGame.myTeamChoice === 'away' && teamKey === 'home'))) {
+                return; // Disabled for opponent in single team mode
+            }
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            team.timeoutsTaken = (team.timeoutsTaken + 1) % 5;
-            logEvent(`${team.name} Timeout Tapped (${team.timeoutsTaken}/4)`, teamKey, null, null);
+            if (team.timeoutsTaken < 4) {
+                team.timeoutsTaken++;
+            } else {
+                team.timeoutsTaken = 0; // Reset wrap around
+            }
+            logEvent(`${team.name} Timeout Tapped (${team.timeoutsTaken}/4)`, teamKey, null, 'TIMEOUT');
             renderScoreboard();
             saveCurrentGameToStorage();
         }
 
+        function renderTimeoutDots(containerId, takenCount, isDisabled = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.createElement('span');
+                if (isDisabled) {
+                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-900 border border-slate-800 opacity-40";
+                } else if (i <= takenCount) {
+                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/80 border border-emerald-300 animate-pulse";
+                } else {
+                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60";
+                }
+                container.appendChild(dot);
+            }
+        }
+
         /**
          * =========================================================================
-         * QUARTER ADVANCEMENT & END MATCH ENGINE
+         * QUARTER CONTROL & CONFIRMATION MODALS
          * =========================================================================
          */
-        function promptAdvanceQuarter() {
-            document.getElementById('advanceModalTitle').innerText = `Advance to Q${currentGame.currentQuarter + 1}?`;
-            document.getElementById('advanceModalText').innerText = `Advancing purges all flagged play deletions and locks Q${currentGame.currentQuarter} actions.`;
-            
-            const btnEnd = document.getElementById('btnEndMatchOption');
-            if (currentGame.currentQuarter >= 4) {
-                btnEnd.classList.remove('hidden');
-            } else {
-                btnEnd.classList.add('hidden');
+        function requestAdvanceQuarter() {
+            const modal = document.getElementById('advanceQuarterModal');
+            const title = document.getElementById('advanceModalTitle');
+            const text = document.getElementById('advanceModalText');
+            const btnContainer = document.getElementById('advanceModalButtons');
+
+            const isEndGameEligible = currentGame.currentQuarter >= 4;
+
+            title.innerText = isEndGameEligible ? `Quarter ${currentGame.currentQuarter} Advancement` : `Advance to Quarter ${currentGame.currentQuarter + 1}?`;
+            text.innerText = "Advancing will purge any flagged play entries and roll back stats for deleted plays.";
+
+            btnContainer.innerHTML = '';
+
+            // Standard Advance Button
+            const advanceBtn = document.createElement('button');
+            advanceBtn.className = "w-full bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-xl text-xs font-bold transition";
+            advanceBtn.innerText = `Confirm Advance (to Q${currentGame.currentQuarter + 1})`;
+            advanceBtn.onclick = () => {
+                confirmAdvanceQuarter(false);
+                closeAdvanceModal();
+            };
+            btnContainer.appendChild(advanceBtn);
+
+            // End Match Button (4th Quarter Onwards)
+            if (isEndGameEligible) {
+                const endMatchBtn = document.createElement('button');
+                endMatchBtn.className = "w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1";
+                endMatchBtn.innerHTML = `<i class="fa-solid fa-flag-checkered mr-1"></i> End & Complete Match`;
+                endMatchBtn.onclick = () => {
+                    confirmAdvanceQuarter(true);
+                    closeAdvanceModal();
+                };
+                btnContainer.appendChild(endMatchBtn);
             }
 
-            document.getElementById('advanceQtrModal').classList.remove('hidden');
+            // Cancel Button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = "w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-semibold";
+            cancelBtn.innerText = "Cancel";
+            cancelBtn.onclick = closeAdvanceModal;
+            btnContainer.appendChild(cancelBtn);
+
+            modal.classList.remove('hidden');
         }
 
-        function closeAdvanceQtrModal() {
-            document.getElementById('advanceQtrModal').classList.add('hidden');
+        function closeAdvanceModal() {
+            document.getElementById('advanceQuarterModal').classList.add('hidden');
         }
 
-        function confirmAdvanceQuarter() {
-            // Roll back all flagged deletions for current quarter
-            purgeFlaggedEvents();
+        function confirmAdvanceQuarter(isEndMatch = false) {
+            // 1. Purge flagged entries for current quarter & rollback stats
+            purgeFlaggedEntries();
 
+            if (isEndMatch) {
+                currentGame.status = 'COMPLETED';
+                logEvent(`MATCH COMPLETED - Final Score: ${currentGame.homeTeam.name} ${calculateTeamTotal(currentGame.homeTeam)} - ${calculateTeamTotal(currentGame.awayTeam)} ${currentGame.awayTeam.name}`, 'home', null);
+                saveCurrentGameToStorage();
+                renderScoreboard();
+                showMessageModal("Match Completed", "The match status has been marked as completed and stored in local database archive.");
+                return;
+            }
+
+            // Advance quarter & reset team fouls
             currentGame.currentQuarter++;
             currentGame.homeTeam.foulsThisQuarter = 0;
             currentGame.awayTeam.foulsThisQuarter = 0;
 
-            logEvent(`Advanced to Quarter ${currentGame.currentQuarter > 4 ? 'OT' + (currentGame.currentQuarter - 4) : currentGame.currentQuarter}`, null, null, null);
+            logEvent(`QUARTER ADVANCED to Q${currentGame.currentQuarter}`, 'home', null);
 
-            closeAdvanceQtrModal();
-            renderAllViews();
+            renderScoreboard();
+            renderPlayLog();
             saveCurrentGameToStorage();
-        }
-
-        function confirmEndMatch() {
-            purgeFlaggedEvents();
-            currentGame.status = 'COMPLETED';
-            logEvent(`Match Completed. Final Score: ${currentGame.homeTeam.name} (${calculateTeamTotal(currentGame.homeTeam)}) - ${currentGame.awayTeam.name} (${calculateTeamTotal(currentGame.awayTeam)})`, null, null, null);
-
-            closeAdvanceQtrModal();
-            renderAllViews();
-            saveCurrentGameToStorage();
-            showMessageModal("Match Completed", "This match has been officially marked as completed and archived.");
-        }
-
-        function purgeFlaggedEvents() {
-            const toPurge = currentGame.events.filter(e => e.quarter === currentGame.currentQuarter && e.flaggedForDeletion);
-            toPurge.forEach(evt => rollbackStatEvent(evt));
-            currentGame.events = currentGame.events.filter(e => !e.flaggedForDeletion);
         }
 
         /**
          * =========================================================================
-         * DIRECT STAT RECORDING ENGINE & ROLLBACK LOGIC
+         * STAT LOGGING ENGINE & DIRECT STAT ACTIONS
          * =========================================================================
          */
         function recordStatDirect(teamKey, playerId, statType) {
@@ -859,7 +1060,9 @@
 
             switch (statType) {
                 case '2PT_MADE':
-                    player.stats.pts += 2; player.stats.fgm += 1; player.stats.fga += 1;
+                    player.stats.pts += 2;
+                    player.stats.fgm += 1;
+                    player.stats.fga += 1;
                     team.scoreByQuarter[currentGame.currentQuarter - 1] = (team.scoreByQuarter[currentGame.currentQuarter - 1] || 0) + 2;
                     description = `2PT Made by #${player.number} ${player.name}`;
                     break;
@@ -868,16 +1071,23 @@
                     description = `Missed 2PT by #${player.number} ${player.name}`;
                     break;
                 case '3PT_MADE':
-                    player.stats.pts += 3; player.stats.fgm += 1; player.stats.fga += 1; player.stats.pm3 += 1; player.stats.pa3 += 1;
+                    player.stats.pts += 3;
+                    player.stats.fgm += 1;
+                    player.stats.fga += 1;
+                    player.stats.pm3 += 1;
+                    player.stats.pa3 += 1;
                     team.scoreByQuarter[currentGame.currentQuarter - 1] = (team.scoreByQuarter[currentGame.currentQuarter - 1] || 0) + 3;
                     description = `3PT Made by #${player.number} ${player.name}`;
                     break;
                 case '3PT_MISS':
-                    player.stats.fga += 1; player.stats.pa3 += 1;
+                    player.stats.fga += 1;
+                    player.stats.pa3 += 1;
                     description = `Missed 3PT by #${player.number} ${player.name}`;
                     break;
                 case 'FT_MADE':
-                    player.stats.pts += 1; player.stats.ftm += 1; player.stats.fta += 1;
+                    player.stats.pts += 1;
+                    player.stats.ftm += 1;
+                    player.stats.fta += 1;
                     team.scoreByQuarter[currentGame.currentQuarter - 1] = (team.scoreByQuarter[currentGame.currentQuarter - 1] || 0) + 1;
                     description = `FT Made by #${player.number} ${player.name}`;
                     break;
@@ -887,11 +1097,11 @@
                     break;
                 case 'OFF_REB':
                     player.stats.offReb += 1;
-                    description = `Off Reb by #${player.number} ${player.name}`;
+                    description = `Off Rebound by #${player.number} ${player.name}`;
                     break;
                 case 'DEF_REB':
                     player.stats.defReb += 1;
-                    description = `Def Reb by #${player.number} ${player.name}`;
+                    description = `Def Rebound by #${player.number} ${player.name}`;
                     break;
                 case 'ASSIST':
                     player.stats.ast += 1;
@@ -912,20 +1122,20 @@
                 case 'FOUL':
                     player.stats.pf += 1;
                     team.foulsThisQuarter += 1;
-                    description = `Foul on #${player.number} ${player.name}`;
+                    description = `Personal Foul on #${player.number} ${player.name}`;
                     break;
             }
 
             logEvent(description, teamKey, playerId, statType);
             renderScoreboard();
-            renderCourtSection();
+            renderCourtPlayers();
             saveCurrentGameToStorage();
         }
 
-        function logEvent(description, teamKey, playerId, statType) {
+        function logEvent(description, teamKey, playerId, statType = null) {
             const event = {
                 id: 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                timestamp: getTimestampWithMs(),
+                timestamp: getDeviceTimestampWithMs(),
                 quarter: currentGame.currentQuarter,
                 teamKey,
                 playerId,
@@ -937,102 +1147,216 @@
             renderPlayLog();
         }
 
+        /**
+         * =========================================================================
+         * RECENT PLAY LOG & FLAG FOR DELETION / UNDO LOGIC
+         * =========================================================================
+         */
         function toggleFlagForDeletion(eventId) {
             const evt = currentGame.events.find(e => e.id === eventId);
-            if (!evt || evt.quarter !== currentGame.currentQuarter) return; // Protected from past quarters
+            if (!evt) return;
+
+            // Flag for deletion toggle only allowed for current quarter actions
+            if (evt.quarter !== currentGame.currentQuarter) return;
+
             evt.flaggedForDeletion = !evt.flaggedForDeletion;
             renderPlayLog();
             saveCurrentGameToStorage();
         }
 
-        function rollbackStatEvent(evt) {
+        function purgeFlaggedEntries() {
+            const flaggedInQuarter = currentGame.events.filter(e => e.quarter === currentGame.currentQuarter && e.flaggedForDeletion);
+
+            flaggedInQuarter.forEach(evt => {
+                rollbackSingleEventStats(evt);
+            });
+
+            // Remove purged events from list
+            currentGame.events = currentGame.events.filter(e => !(e.quarter === currentGame.currentQuarter && e.flaggedForDeletion));
+        }
+
+        function rollbackSingleEventStats(evt) {
             if (!evt.teamKey || !evt.playerId || !evt.statType) return;
             const team = evt.teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
             const player = team.roster.find(p => p.id === evt.playerId);
-            if (!player) return;
 
-            switch (evt.statType) {
-                case '2PT_MADE': player.stats.pts -= 2; player.stats.fgm -= 1; player.stats.fga -= 1; team.scoreByQuarter[evt.quarter - 1] -= 2; break;
-                case '2PT_MISS': player.stats.fga -= 1; break;
-                case '3PT_MADE': player.stats.pts -= 3; player.stats.fgm -= 1; player.stats.fga -= 1; player.stats.pm3 -= 1; player.stats.pa3 -= 1; team.scoreByQuarter[evt.quarter - 1] -= 3; break;
-                case '3PT_MISS': player.stats.fga -= 1; player.stats.pa3 -= 1; break;
-                case 'FT_MADE': player.stats.pts -= 1; player.stats.ftm -= 1; player.stats.fta -= 1; team.scoreByQuarter[evt.quarter - 1] -= 1; break;
-                case 'FT_MISS': player.stats.fta -= 1; break;
-                case 'OFF_REB': player.stats.offReb -= 1; break;
-                case 'DEF_REB': player.stats.defReb -= 1; break;
-                case 'ASSIST': player.stats.ast -= 1; break;
-                case 'STEAL': player.stats.stl -= 1; break;
-                case 'BLOCK': player.stats.blk -= 1; break;
-                case 'TURNOVER': player.stats.to -= 1; break;
-                case 'FOUL': player.stats.pf -= 1; team.foulsThisQuarter = Math.max(0, team.foulsThisQuarter - 1); break;
+            if (player) {
+                switch (evt.statType) {
+                    case '2PT_MADE':
+                        player.stats.pts = Math.max(0, player.stats.pts - 2);
+                        player.stats.fgm = Math.max(0, player.stats.fgm - 1);
+                        player.stats.fga = Math.max(0, player.stats.fga - 1);
+                        team.scoreByQuarter[evt.quarter - 1] = Math.max(0, (team.scoreByQuarter[evt.quarter - 1] || 0) - 2);
+                        break;
+                    case '2PT_MISS':
+                        player.stats.fga = Math.max(0, player.stats.fga - 1);
+                        break;
+                    case '3PT_MADE':
+                        player.stats.pts = Math.max(0, player.stats.pts - 3);
+                        player.stats.fgm = Math.max(0, player.stats.fgm - 1);
+                        player.stats.fga = Math.max(0, player.stats.fga - 1);
+                        player.stats.pm3 = Math.max(0, player.stats.pm3 - 1);
+                        player.stats.pa3 = Math.max(0, player.stats.pa3 - 1);
+                        team.scoreByQuarter[evt.quarter - 1] = Math.max(0, (team.scoreByQuarter[evt.quarter - 1] || 0) - 3);
+                        break;
+                    case '3PT_MISS':
+                        player.stats.fga = Math.max(0, player.stats.fga - 1);
+                        player.stats.pa3 = Math.max(0, player.stats.pa3 - 1);
+                        break;
+                    case 'FT_MADE':
+                        player.stats.pts = Math.max(0, player.stats.pts - 1);
+                        player.stats.ftm = Math.max(0, player.stats.ftm - 1);
+                        player.stats.fta = Math.max(0, player.stats.fta - 1);
+                        team.scoreByQuarter[evt.quarter - 1] = Math.max(0, (team.scoreByQuarter[evt.quarter - 1] || 0) - 1);
+                        break;
+                    case 'FT_MISS':
+                        player.stats.fta = Math.max(0, player.stats.fta - 1);
+                        break;
+                    case 'OFF_REB': player.stats.offReb = Math.max(0, player.stats.offReb - 1); break;
+                    case 'DEF_REB': player.stats.defReb = Math.max(0, player.stats.defReb - 1); break;
+                    case 'ASSIST': player.stats.ast = Math.max(0, player.stats.ast - 1); break;
+                    case 'STEAL': player.stats.stl = Math.max(0, player.stats.stl - 1); break;
+                    case 'BLOCK': player.stats.blk = Math.max(0, player.stats.blk - 1); break;
+                    case 'TURNOVER': player.stats.to = Math.max(0, player.stats.to - 1); break;
+                    case 'FOUL':
+                        player.stats.pf = Math.max(0, player.stats.pf - 1);
+                        team.foulsThisQuarter = Math.max(0, team.foulsThisQuarter - 1);
+                        break;
+                }
             }
         }
 
         function undoLastPlay() {
-            if (currentGame.events.length === 0) return;
-
-            const firstValidIdx = currentGame.events.findIndex(e => e.quarter === currentGame.currentQuarter && e.statType !== null);
-            if (firstValidIdx === -1) {
-                showMessageModal("Undo Protected", "Cannot undo events from previous quarters or system log notifications.");
+            if (currentGame.events.length === 0) {
+                showMessageModal("Nothing to Undo", "There are no play actions to undo.");
                 return;
             }
 
-            const evt = currentGame.events.splice(firstValidIdx, 1)[0];
-            rollbackStatEvent(evt);
+            // Find top playable action from current quarter
+            const topEvent = currentGame.events[0];
+
+            // Protection: Prevent undoing quarter advancement or previous quarter events
+            if (topEvent.quarter !== currentGame.currentQuarter) {
+                showMessageModal("Action Protected", "Cannot undo plays from previous quarters.");
+                return;
+            }
+
+            if (topEvent.statType === 'TIMEOUT' || topEvent.description.includes('QUARTER')) {
+                // Remove notification action
+                currentGame.events.shift();
+                renderPlayLog();
+                return;
+            }
+
+            // Rollback top play action
+            const evt = currentGame.events.shift();
+            rollbackSingleEventStats(evt);
 
             renderScoreboard();
-            renderCourtSection();
+            renderCourtPlayers();
             renderPlayLog();
             saveCurrentGameToStorage();
         }
 
         /**
          * =========================================================================
-         * DRAG AND DROP & TOUCH SUBSTITUTIONS
+         * DRAG & DROP & TAP SUBSTITUTION SYSTEM
          * =========================================================================
          */
-        function handleDragStart(e, teamKey, playerId) {
-            e.dataTransfer.setData('text/plain', JSON.stringify({ teamKey, playerId }));
+        function setupDragAndDropHandlers(cardElement, targetPlayerId, teamKey) {
+            cardElement.ondragover = (e) => {
+                e.preventDefault();
+                cardElement.classList.add('drag-over-court');
+            };
+            cardElement.ondragleave = () => {
+                cardElement.classList.remove('drag-over-court');
+            };
+            cardElement.ondrop = (e) => {
+                e.preventDefault();
+                cardElement.classList.remove('drag-over-court');
+                const draggedBenchId = e.dataTransfer.getData('text/plain');
+                if (draggedBenchId) {
+                    performSubstitution(teamKey, draggedBenchId, targetPlayerId);
+                }
+            };
         }
 
-        function handleDragOver(e) { e.preventDefault(); }
-
-        function handleDropOnActive(e, targetTeamKey, targetActivePlayerId) {
-            e.preventDefault();
-            const dataStr = e.dataTransfer.getData('text/plain');
-            if (!dataStr) return;
-            const data = JSON.parse(dataStr);
-
-            if (data.teamKey !== targetTeamKey) {
-                showMessageModal("Sub Warning", "Cannot substitute players across opposing teams!");
-                return;
-            }
-
-            swapSubstitutes(data.teamKey, data.playerId, targetActivePlayerId);
-        }
-
-        function swapSubstitutes(teamKey, subId, activeId) {
+        function performSubstitution(teamKey, benchPlayerId, courtPlayerId) {
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            const subPlayer = team.roster.find(p => p.id === subId);
-            const activePlayer = team.roster.find(p => p.id === activeId);
+            const benchPlayer = team.roster.find(p => p.id === benchPlayerId);
+            const courtPlayer = team.roster.find(p => p.id === courtPlayerId);
 
-            if (subPlayer && activePlayer) {
-                subPlayer.onCourt = true;
-                activePlayer.onCourt = false;
-                logEvent(`SUB: #${subPlayer.number} ${subPlayer.name} in for #${activePlayer.number} ${activePlayer.name}`, teamKey, null, null);
-                renderCourtSection();
+            if (benchPlayer && courtPlayer) {
+                benchPlayer.onCourt = true;
+                courtPlayer.onCourt = false;
+
+                logEvent(`SUB: #${benchPlayer.number} ${benchPlayer.name} in for #${courtPlayer.number} ${courtPlayer.name}`, teamKey, null);
+                renderCourtPlayers();
                 saveCurrentGameToStorage();
             }
         }
 
         /**
          * =========================================================================
-         * RENDERING ENGINE & UI COMPONENT GENERATION
+         * TRACKING MODE (SINGLE VS DUAL TEAM) & RENDER ENGINE
          * =========================================================================
          */
+        function toggleSingleTeamMode() {
+            currentGame.hideOpponent = document.getElementById('hideOpponentToggle').checked;
+            renderAllViews();
+            saveCurrentGameToStorage();
+        }
+
+        function onMyTeamChoiceChanged() {
+            currentGame.myTeamChoice = document.getElementById('myTeamChoice').value;
+            renderAllViews();
+            saveCurrentGameToStorage();
+        }
+
         function renderAllViews() {
+            const isSingle = currentGame.hideOpponent;
+            const myTeam = currentGame.myTeamChoice; // 'home' or 'away'
+
+            // Sync Toggle Inputs
+            document.getElementById('hideOpponentToggle').checked = isSingle;
+            document.getElementById('myTeamChoice').value = myTeam;
+            document.getElementById('myTeamSelectorBox').style.display = isSingle ? 'flex' : 'none';
+
+            // Court Section Grids
+            const courtGrid = document.getElementById('courtGridContainer');
+            const homeSec = document.getElementById('homeCourtSection');
+            const awaySec = document.getElementById('awayCourtSection');
+            const awayBoxSec = document.getElementById('awayBoxSection');
+            const homeActiveList = document.getElementById('homeActiveList');
+            const awayActiveList = document.getElementById('awayActiveList');
+
+            if (isSingle) {
+                if (myTeam === 'home') {
+                    homeSec.style.display = 'block';
+                    awaySec.style.display = 'none';
+                } else {
+                    homeSec.style.display = 'none';
+                    awaySec.style.display = 'block';
+                }
+                if (awayBoxSec) awayBoxSec.style.display = 'none';
+                
+                // Single-team mode uses multi-column side-by-side grid
+                courtGrid.className = "grid grid-cols-1 gap-4";
+                homeActiveList.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
+                awayActiveList.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
+            } else {
+                homeSec.style.display = 'block';
+                awaySec.style.display = 'block';
+                if (awayBoxSec) awayBoxSec.style.display = 'block';
+
+                // Two-team split screen layout
+                courtGrid.className = "grid grid-cols-1 lg:grid-cols-2 gap-4";
+                homeActiveList.className = "grid grid-cols-1 gap-3";
+                awayActiveList.className = "grid grid-cols-1 gap-3";
+            }
+
             renderScoreboard();
-            renderCourtSection();
+            renderCourtPlayers();
             renderPlayLog();
             renderRosterSetupTab();
         }
@@ -1042,294 +1366,218 @@
         }
 
         function renderScoreboard() {
-            const homeScoreEl = document.getElementById('homeScore');
-            const awayScoreEl = document.getElementById('awayScore');
-            const homeFoulsEl = document.getElementById('homeFouls');
-            const awayFoulsEl = document.getElementById('awayFouls');
+            const isSingle = currentGame.hideOpponent;
+            const myTeam = currentGame.myTeamChoice;
 
-            document.getElementById('homeScoreName').innerText = currentGame.homeTeam.name;
+            document.getElementById('homeScoreName').innerText = currentGame.homeTeam.name.toUpperCase();
+            document.getElementById('homeCourtTitle').innerText = currentGame.homeTeam.name;
             document.getElementById('homeColorBadge').style.backgroundColor = currentGame.homeTeam.color;
-            document.getElementById('awayScoreName').innerText = currentGame.awayTeam.name;
+            document.getElementById('homeCourtBadge').style.backgroundColor = currentGame.homeTeam.color;
+
+            document.getElementById('awayScoreName').innerText = currentGame.awayTeam.name.toUpperCase();
+            document.getElementById('awayCourtTitle').innerText = currentGame.awayTeam.name;
             document.getElementById('awayColorBadge').style.backgroundColor = currentGame.awayTeam.color;
+            document.getElementById('awayCourtBadge').style.backgroundColor = currentGame.awayTeam.color;
 
-            // Timeout Indicators
-            for (let i = 1; i <= 4; i++) {
-                document.getElementById(`homeTo${i}`).className = i <= currentGame.homeTeam.timeoutsTaken 
-                    ? "w-3 h-3 rounded-full bg-emerald-400 border border-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.8)]" 
-                    : "w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800";
-            }
+            // Scoreboard Masking Logic: When single-team is enabled, opponent details are masked
+            const isHomeMasked = isSingle && myTeam === 'away';
+            const isAwayMasked = isSingle && myTeam === 'home';
 
-            // Single Team Masking Mode
-            if (currentGame.hideOpponent) {
-                if (currentGame.myTeamSlot === 'home') {
-                    homeScoreEl.innerText = calculateTeamTotal(currentGame.homeTeam);
-                    homeFoulsEl.innerText = currentGame.homeTeam.foulsThisQuarter;
-                    awayScoreEl.innerText = "--";
-                    awayFoulsEl.innerText = "-";
-                    for (let i = 1; i <= 4; i++) {
-                        document.getElementById(`awayTo${i}`).className = "w-3 h-3 rounded-full bg-slate-900 border border-slate-800 opacity-20";
-                    }
-                } else {
-                    awayScoreEl.innerText = calculateTeamTotal(currentGame.awayTeam);
-                    awayFoulsEl.innerText = currentGame.awayTeam.foulsThisQuarter;
-                    homeScoreEl.innerText = "--";
-                    homeFoulsEl.innerText = "-";
-                    for (let i = 1; i <= 4; i++) {
-                        document.getElementById(`homeTo${i}`).className = "w-3 h-3 rounded-full bg-slate-900 border border-slate-800 opacity-20";
-                    }
-                }
-            } else {
-                homeScoreEl.innerText = calculateTeamTotal(currentGame.homeTeam);
-                homeFoulsEl.innerText = currentGame.homeTeam.foulsThisQuarter;
-                awayScoreEl.innerText = calculateTeamTotal(currentGame.awayTeam);
-                awayFoulsEl.innerText = currentGame.awayTeam.foulsThisQuarter;
+            document.getElementById('homeScore').innerText = isHomeMasked ? '--' : calculateTeamTotal(currentGame.homeTeam);
+            document.getElementById('homeFouls').innerText = isHomeMasked ? '-' : currentGame.homeTeam.foulsThisQuarter;
+            renderTimeoutDots('homeTimeoutDots', currentGame.homeTeam.timeoutsTaken, isHomeMasked);
 
-                for (let i = 1; i <= 4; i++) {
-                    document.getElementById(`awayTo${i}`).className = i <= currentGame.awayTeam.timeoutsTaken 
-                        ? "w-3 h-3 rounded-full bg-emerald-400 border border-emerald-200 shadow-[0_0_8px_rgba(52,211,153,0.8)]" 
-                        : "w-3 h-3 rounded-full bg-emerald-950 border border-emerald-800";
-                }
-            }
+            document.getElementById('awayScore').innerText = isAwayMasked ? '--' : calculateTeamTotal(currentGame.awayTeam);
+            document.getElementById('awayFouls').innerText = isAwayMasked ? '-' : currentGame.awayTeam.foulsThisQuarter;
+            renderTimeoutDots('awayTimeoutDots', currentGame.awayTeam.timeoutsTaken, isAwayMasked);
 
             document.getElementById('periodDisplay').innerText = currentGame.currentQuarter > 4 ? `OT${currentGame.currentQuarter - 4}` : `Q${currentGame.currentQuarter}`;
         }
 
-        function renderCourtSection() {
-            const container = document.getElementById('courtSectionContainer');
-            container.innerHTML = '';
+        /**
+         * Renders active player cards with Line Hierarchy, 5-Box Foul Indicators, 
+         * and the 7-Column squarish direct action button grid.
+         */
+        function renderCourtPlayers() {
+            renderTeamCourtCards('home', currentGame.homeTeam, 'homeActiveList', 'homeBenchList');
+            renderTeamCourtCards('away', currentGame.awayTeam, 'awayActiveList', 'awayBenchList');
+        }
 
-            const isSingle = currentGame.hideOpponent;
-            const singleSlot = currentGame.myTeamSlot;
+        function renderTeamCourtCards(teamKey, team, activeContainerId, benchContainerId) {
+            const activeContainer = document.getElementById(activeContainerId);
+            const benchContainer = document.getElementById(benchContainerId);
 
-            if (isSingle) {
-                // SINGLE TEAM FULL WIDTH ACTIVE GRID
-                const teamKey = singleSlot;
-                const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = "bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4";
-                wrapper.innerHTML = `
-                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3.5 h-3.5 rounded-full" style="background-color: ${team.color}"></span>
-                            <h3 class="font-black text-base text-white tracking-tight">${team.name} - Active Court Roster</h3>
+            activeContainer.innerHTML = '';
+            benchContainer.innerHTML = '';
+
+            const onCourtPlayers = team.roster.filter(p => p.onCourt);
+            const benchPlayers = team.roster.filter(p => !p.onCourt);
+
+            // 1. Render Active Player Cards
+            onCourtPlayers.forEach(player => {
+                const s = player.stats;
+                const totalReb = s.offReb + s.defReb;
+                const fgPct = s.fga > 0 ? Math.round((s.fgm / s.fga) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = "w-full bg-slate-950/90 rounded-2xl p-3 border border-slate-800 shadow-lg space-y-2.5 transition";
+
+                // Active Card Layout Matching Specification:
+                // Enlarged jersey # spanning height of name line + 2 summary lines
+                card.innerHTML = `
+                    <div class="flex items-stretch space-x-2.5">
+                        <!-- Huge Jersey Number Box spanning full height -->
+                        <div class="flex items-center justify-center bg-slate-900 px-2 py-1 rounded-xl border border-slate-800/80 min-w-[54px]">
+                            <span class="text-3xl sm:text-4xl font-black font-mono text-orange-400 tracking-tighter leading-none">#${player.number}</span>
+                        </div>
+
+                        <!-- Right Container: Player Name & 5-Box Foul Indicator on top, Summary Box below -->
+                        <div class="flex-1 space-y-1 overflow-hidden">
+                            <!-- Player Name & 5-Box Foul Indicator side by side -->
+                            <div class="flex items-center justify-between">
+                                <span class="font-black text-sm sm:text-base text-white truncate max-w-[130px] sm:max-w-[170px]">${player.name}</span>
+                                <div class="flex items-center space-x-1">
+                                    ${render5BoxFouls(player.stats.pf)}
+                                </div>
+                            </div>
+
+                            <!-- Player Line Hierarchy Summaries directly beneath Player Name -->
+                            <div class="text-[10px] sm:text-[11px] font-mono text-slate-300 space-y-0.5 bg-slate-900/90 px-2 py-1 rounded-lg border border-slate-800/80">
+                                <div class="text-slate-400 font-semibold truncate">${s.fgm}/${s.fga} FG (${fgPct}%) | ${s.pm3}/${s.pa3} 3PT | ${s.ftm}/${s.fta} FT</div>
+                                <div class="font-bold text-amber-300 truncate">REB: ${totalReb} (${s.offReb}:${s.defReb}) | AST: ${s.ast} | <span class="text-orange-400 font-black">PTS: ${s.pts}</span></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="singleTeamActiveGrid"></div>
+
+                    <!-- 7-Column Uniform Action Grid -->
+                    <div class="action-grid-7">
+                        <!-- Row 1 -->
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MADE')" class="stat-btn bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold rounded-lg text-xs h-9 flex items-center justify-center border border-emerald-500/40">+2</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MADE')" class="stat-btn bg-emerald-800 hover:bg-emerald-700 text-amber-200 font-extrabold rounded-lg text-xs h-9 flex items-center justify-center border border-emerald-500/40">+3</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MADE')" class="stat-btn bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-lg text-xs h-9 flex items-center justify-center border border-emerald-400/40">+1FT</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'OFF_REB')" class="stat-btn bg-blue-700 hover:bg-blue-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-9 flex items-center justify-center border border-blue-500/40">OFF REB</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'STEAL')" class="stat-btn bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-lg text-xs h-9 flex items-center justify-center border border-purple-500/40">STL</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'TURNOVER')" class="stat-btn bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg text-xs h-9 flex items-center justify-center border border-amber-500/40">TURN</button>
+                        
+                        <!-- Spanning FOUL button across both rows -->
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FOUL')" class="stat-btn col-span-1 row-span-2 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-lg h-full min-h-[76px] flex flex-col items-center justify-center border border-rose-500/50 shadow-md">
+                            <i class="fa-solid fa-triangle-exclamation text-xs mb-0.5"></i>
+                            <span>FOUL</span>
+                        </button>
+
+                        <!-- Row 2 -->
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MISS')" class="stat-btn bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-9 flex items-center justify-center border border-slate-700">Miss 2</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MISS')" class="stat-btn bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-9 flex items-center justify-center border border-slate-700">Miss 3</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MISS')" class="stat-btn bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-9 flex items-center justify-center border border-slate-700">Miss FT</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'DEF_REB')" class="stat-btn bg-indigo-700 hover:bg-indigo-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-9 flex items-center justify-center border border-indigo-500/40">DEF REB</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'ASSIST')" class="stat-btn bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-lg text-xs h-9 flex items-center justify-center border border-sky-500/40">ASST</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'BLOCK')" class="stat-btn bg-teal-700 hover:bg-teal-600 text-white font-bold rounded-lg text-xs h-9 flex items-center justify-center border border-teal-500/40">BLK</button>
+                    </div>
                 `;
-                container.appendChild(wrapper);
 
-                const activeGrid = wrapper.querySelector('#singleTeamActiveGrid');
-                const actives = team.roster.filter(p => p.onCourt);
-                const bench = team.roster.filter(p => !p.onCourt);
-
-                actives.forEach(player => activeGrid.appendChild(buildPlayerCardElement(teamKey, player)));
-
-                // 5th Tile Slot for Substitutes Grid
-                activeGrid.appendChild(buildBenchSubstitutesGridTile(teamKey, bench, actives));
-
-            } else {
-                // DUAL TEAM SPLIT-SCREEN MODE (lg:grid-cols-2)
-                const splitGrid = document.createElement('div');
-                splitGrid.className = "grid grid-cols-1 lg:grid-cols-2 gap-4";
-
-                const buildTeamColumn = (teamKey, team) => {
-                    const col = document.createElement('div');
-                    col.className = "bg-slate-900/90 rounded-2xl p-3 border border-slate-800 shadow-xl space-y-3";
-                    col.innerHTML = `
-                        <div class="flex items-center space-x-2 border-b border-slate-800 pb-2">
-                            <span class="w-3 h-3 rounded-full" style="background-color: ${team.color}"></span>
-                            <h3 class="font-black text-sm text-white">${team.name}</h3>
-                        </div>
-                        <div class="space-y-3" id="${teamKey}SplitActiveGrid"></div>
-                    `;
-                    const gridTarget = col.querySelector(`#${teamKey}SplitActiveGrid`);
-                    const actives = team.roster.filter(p => p.onCourt);
-                    const bench = team.roster.filter(p => !p.onCourt);
-
-                    actives.forEach(p => gridTarget.appendChild(buildPlayerCardElement(teamKey, p)));
-                    gridTarget.appendChild(buildBenchSubstitutesGridTile(teamKey, bench, actives));
-
-                    return col;
-                };
-
-                splitGrid.appendChild(buildTeamColumn('home', currentGame.homeTeam));
-                splitGrid.appendChild(buildTeamColumn('away', currentGame.awayTeam));
-                container.appendChild(splitGrid);
-            }
-        }
-
-        function buildPlayerCardElement(teamKey, player) {
-            const card = document.createElement('div');
-            card.className = "bg-[#0b1329] rounded-2xl p-3 border border-slate-800 shadow-lg space-y-2.5 hover:border-slate-700 transition";
-            card.ondragover = (e) => handleDragOver(e);
-            card.ondrop = (e) => handleDropOnActive(e, teamKey, player.id);
-
-            const s = player.stats;
-            const fgPct = s.fga > 0 ? Math.round((s.fgm / s.fga) * 100) : 0;
-            const p3Pct = s.pa3 > 0 ? Math.round((s.pm3 / s.pa3) * 100) : 0;
-            const ftPct = s.fta > 0 ? Math.round((s.ftm / s.fta) * 100) : 0;
-
-            // 5-Box Foul Indicator (Same size as capital letter of name)
-            let foulBoxesHtml = '';
-            for (let i = 1; i <= 5; i++) {
-                const filled = i <= s.pf;
-                foulBoxesHtml += `<span class="w-4 h-4 inline-block rounded ${filled ? 'bg-rose-600 border border-rose-400 shadow-[0_0_8px_rgba(225,29,72,0.8)]' : 'bg-rose-950/60 border border-rose-900/60'}"></span>`;
-            }
-
-            card.innerHTML = `
-                <!-- TOP HEADER: ENLARGED JERSEY NUMBER + NAME & FOULS + 2-ROW SUMMARY -->
-                <div class="flex items-center space-x-3 bg-slate-950/90 p-2.5 rounded-xl border border-slate-800/80">
-                    
-                    <!-- ENLARGED JERSEY NUMBER (Height matches Name + 2 Rows Summary) -->
-                    <div class="h-16 px-3 bg-[#1e293b] text-orange-400 rounded-xl flex items-center justify-center border border-orange-500/40 shadow-inner">
-                        <span class="text-3xl sm:text-4xl font-black font-mono tracking-tighter">#${player.number}</span>
-                    </div>
-
-                    <!-- RIGHT DETAILS COLUMN -->
-                    <div class="flex-1 space-y-1">
-                        <!-- ROW 1: PLAYER NAME + ENLARGED FOUL INDICATOR -->
-                        <div class="flex items-center justify-between">
-                            <span class="font-black text-sm text-white truncate max-w-[150px] leading-none">${player.name}</span>
-                            <div class="flex items-center space-x-1" title="${s.pf} Personal Fouls">
-                                ${foulBoxesHtml}
-                            </div>
-                        </div>
-
-                        <!-- 2-ROW SUMMARY BOX -->
-                        <div class="bg-slate-900/90 px-2 py-1 rounded-lg border border-slate-800 text-[10px] font-mono text-slate-300 space-y-0.5">
-                            <div class="flex justify-between border-b border-slate-800/80 pb-0.5">
-                                <span>${s.fgm}/${s.fga} FG (${fgPct}%)</span>
-                                <span>${s.pm3}/${s.pa3} 3PT</span>
-                                <span>${s.ftm}/${s.fta} FT</span>
-                            </div>
-                            <div class="flex justify-between font-bold text-amber-400 pt-0.5">
-                                <span>REB: ${s.offReb + s.defReb} (O:${s.offReb} D:${s.defReb})</span>
-                                <span>AST: ${s.ast}</span>
-                                <span class="text-white font-black">PTS: ${s.pts}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- 7-COLUMN ACTION BUTTON MATRIX WITH RECTANGULAR FOUL BUTTON -->
-                <div class="grid grid-cols-7 gap-1.5 pt-0.5">
-                    <!-- ROW 1 -->
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MADE')" class="stat-btn aspect-square bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow border border-emerald-400/40 flex items-center justify-center">+2</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MADE')" class="stat-btn aspect-square bg-emerald-600 hover:bg-emerald-500 text-amber-200 font-black text-xs sm:text-sm rounded-xl shadow border border-emerald-400/40 flex items-center justify-center">+3</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MADE')" class="stat-btn aspect-square bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-[11px] sm:text-xs rounded-xl shadow border border-emerald-400/40 flex items-center justify-center">+1FT</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'OFF_REB')" class="stat-btn aspect-square bg-blue-600 hover:bg-blue-500 text-white font-bold text-[9px] sm:text-[10px] leading-tight rounded-xl shadow border border-blue-400/40 flex items-center justify-center text-center">OFF REB</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'STEAL')" class="stat-btn aspect-square bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow border border-purple-400/40 flex items-center justify-center">STL</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'TURNOVER')" class="stat-btn aspect-square bg-amber-700 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow border border-amber-500/40 flex items-center justify-center">TURN</button>
-                    
-                    <!-- RECTANGULAR FOUL BUTTON (SPANS ROW 1 & 2) -->
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FOUL')" class="stat-btn col-span-1 row-span-2 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-xl shadow border border-rose-500/50 flex flex-col items-center justify-center h-full min-h-[72px] space-y-1">
-                        <i class="fa-solid fa-hand text-sm animate-bounce"></i>
-                        <span>FOUL</span>
-                    </button>
-
-                    <!-- ROW 2 -->
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MISS')" class="stat-btn aspect-square bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold text-[10px] sm:text-xs rounded-xl border border-slate-700 flex items-center justify-center">Miss 2</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MISS')" class="stat-btn aspect-square bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold text-[10px] sm:text-xs rounded-xl border border-slate-700 flex items-center justify-center">Miss 3</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MISS')" class="stat-btn aspect-square bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold text-[9px] sm:text-[10px] rounded-xl border border-slate-700 flex items-center justify-center text-center">Miss FT</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'DEF_REB')" class="stat-btn aspect-square bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] sm:text-[10px] leading-tight rounded-xl shadow border border-indigo-400/40 flex items-center justify-center text-center">DEF REB</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'ASSIST')" class="stat-btn aspect-square bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow border border-sky-400/40 flex items-center justify-center">ASST</button>
-                    <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'BLOCK')" class="stat-btn aspect-square bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs rounded-xl shadow border border-teal-400/40 flex items-center justify-center">BLK</button>
-                </div>
-            `;
-
-            return card;
-        }
-
-        function buildBenchSubstitutesGridTile(teamKey, benchList, activeList) {
-            const tile = document.createElement('div');
-            tile.className = "bg-[#0b1329] rounded-2xl p-3 border border-slate-800 shadow-lg space-y-2 flex flex-col justify-between";
-            
-            let benchTilesHtml = '';
-            if (benchList.length === 0) {
-                benchTilesHtml = `<div class="text-xs text-slate-500 italic py-4 text-center">No bench players.</div>`;
-            } else {
-                benchList.forEach(p => {
-                    // Match FOUL button dimensions with Number on top, Name beneath
-                    benchTilesHtml += `
-                        <div draggable="true" ondragstart="handleDragStart(event, '${teamKey}', '${p.id}')" onclick="promptTapSub('${teamKey}', '${p.id}')" class="stat-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-2 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing text-center shadow-md">
-                            <span class="text-xl font-black font-mono text-orange-400 leading-none">#${p.number}</span>
-                            <span class="text-[10px] font-bold text-slate-200 truncate w-full mt-1 leading-tight">${p.name}</span>
-                        </div>
-                    `;
-                });
-            }
-
-            tile.innerHTML = `
-                <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                    <span class="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center space-x-1.5">
-                        <i class="fa-solid fa-arrows-rotate text-orange-400"></i>
-                        <span>Bench Substitutes</span>
-                    </span>
-                    <span class="text-[10px] text-slate-500">Drag or Tap to Sub</span>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto max-h-[160px] p-0.5">
-                    ${benchTilesHtml}
-                </div>
-            `;
-
-            return tile;
-        }
-
-        function promptTapSub(teamKey, subId) {
-            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            const subPlayer = team.roster.find(p => p.id === subId);
-            const actives = team.roster.filter(p => p.onCourt);
-
-            let buttonsHtml = '';
-            actives.forEach(a => {
-                buttonsHtml += `
-                    <button onclick="closeMsgModal(); swapSubstitutes('${teamKey}', '${subId}', '${a.id}')" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold p-2.5 rounded-xl border border-slate-700 text-xs text-left flex justify-between items-center">
-                        <span>Sub out #${a.number} ${a.name}</span>
-                        <i class="fa-solid fa-arrow-right-arrow-left text-orange-400"></i>
-                    </button>
-                `;
+                // Drag Target listener for player card
+                setupDragAndDropHandlers(card, player.id, teamKey);
+                activeContainer.appendChild(card);
             });
 
-            document.getElementById('msgModalTitle').innerText = `Substitute #${subPlayer.number} ${subPlayer.name}`;
-            document.getElementById('msgModalText').innerText = `Choose an active court player to substitute out:`;
-            
-            const btnContainer = document.getElementById('msgModalButtons');
-            btnContainer.className = "flex flex-col space-y-2 w-full pt-1";
-            btnContainer.innerHTML = buttonsHtml + `<button onclick="closeMsgModal()" class="w-full bg-slate-900 text-slate-400 py-2 rounded-xl text-xs font-semibold">Cancel</button>`;
-            
-            document.getElementById('msgModal').classList.remove('hidden');
+            // 2. Render Bench Substitutes Tiles
+            benchPlayers.forEach(player => {
+                const tile = document.createElement('div');
+                tile.draggable = true;
+                tile.className = "draggable-bench px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 text-xs font-bold flex items-center space-x-1.5 hover:border-orange-500 transition shadow-sm";
+                tile.innerHTML = `
+                    <span class="text-orange-400 font-mono">#${player.number}</span>
+                    <span class="truncate max-w-[80px]">${player.name}</span>
+                `;
+
+                tile.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', player.id);
+                };
+
+                // Tap-to-sub fallback prompt
+                tile.onclick = () => {
+                    promptTapSub(teamKey, player.id);
+                };
+
+                benchContainer.appendChild(tile);
+            });
+        }
+
+        function render5BoxFouls(foulCount) {
+            let boxesHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= foulCount) {
+                    boxesHtml += `<span class="w-3 h-3 rounded-sm bg-rose-600 border border-rose-400 inline-block"></span>`;
+                } else {
+                    boxesHtml += `<span class="w-3 h-3 rounded-sm bg-rose-950/60 border border-rose-900/50 inline-block"></span>`;
+                }
+            }
+
+            if (foulCount >= 5) {
+                boxesHtml += `<span class="ml-1 text-[9px] font-black uppercase text-rose-500 bg-rose-950 px-1 rounded animate-pulse">FOUL OUT!</span>`;
+            }
+            return boxesHtml;
+        }
+
+        function promptTapSub(teamKey, benchPlayerId) {
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            const benchPlayer = team.roster.find(p => p.id === benchPlayerId);
+            const activeOnCourt = team.roster.filter(p => p.onCourt);
+
+            const modal = document.getElementById('msgModal');
+            document.getElementById('msgModalTitle').innerText = `Sub In #${benchPlayer.number} ${benchPlayer.name}`;
+            document.getElementById('msgModalText').innerText = "Select player on court to replace:";
+
+            const btnBox = document.getElementById('msgModalButtons');
+            btnBox.className = "flex flex-col space-y-1.5 pt-2";
+            btnBox.innerHTML = '';
+
+            activeOnCourt.forEach(courtP => {
+                const subBtn = document.createElement('button');
+                subBtn.className = "w-full bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-xl text-xs font-bold border border-slate-700 text-left flex justify-between";
+                subBtn.innerHTML = `<span>Replace #${courtP.number} ${courtP.name}</span> <i class="fa-solid fa-arrows-rotate text-orange-400"></i>`;
+                subBtn.onclick = () => {
+                    performSubstitution(teamKey, benchPlayerId, courtP.id);
+                    closeMsgModal();
+                };
+                btnBox.appendChild(subBtn);
+            });
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = "w-full bg-slate-900 text-slate-400 p-2 rounded-xl text-xs font-semibold";
+            cancelBtn.innerText = "Cancel";
+            cancelBtn.onclick = closeMsgModal;
+            btnBox.appendChild(cancelBtn);
+
+            modal.classList.remove('hidden');
         }
 
         function renderPlayLog() {
             const container = document.getElementById('playLogContainer');
             container.innerHTML = '';
 
-            const activeEvents = currentGame.events;
-
-            if (activeEvents.length === 0) {
-                container.innerHTML = `<div class="text-slate-500 italic text-center py-2">No plays recorded yet.</div>`;
+            if (currentGame.events.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 italic text-center py-3">No play actions logged in this quarter yet.</div>`;
                 return;
             }
 
-            activeEvents.forEach(evt => {
-                const item = document.createElement('div');
+            currentGame.events.forEach(evt => {
                 const isCurrentQtr = evt.quarter === currentGame.currentQuarter;
-                const isFlagged = evt.flaggedForDeletion;
-
-                item.className = `flex items-center justify-between p-2 rounded-xl border text-xs transition ${
-                    isFlagged ? 'flagged-del border-rose-800/80' : 'bg-slate-950/80 border-slate-800/80 text-slate-200'
-                }`;
-
+                const item = document.createElement('div');
+                
+                let flagClass = evt.flaggedForDeletion ? 'flagged-entry' : 'bg-slate-950/80 border-slate-800/80';
+                item.className = `flex items-center justify-between p-2 rounded-xl border text-xs transition ${flagClass}`;
+                
                 item.innerHTML = `
                     <div class="flex items-center space-x-2.5">
-                        <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-900 text-orange-400 border border-slate-800">Q${evt.quarter} ${evt.timestamp}</span>
-                        <span class="font-medium">${evt.description}</span>
+                        <span class="text-[10px] font-mono text-orange-400 font-bold">Q${evt.quarter} ${evt.timestamp}</span>
+                        <span class="font-medium text-slate-200">${evt.description}</span>
                     </div>
+
+                    <!-- Flag for deletion trash icon (Only shown for current quarter actions) -->
                     ${isCurrentQtr ? `
-                        <button onclick="toggleFlagForDeletion('${evt.id}')" class="p-1 text-slate-400 hover:text-rose-400 transition" title="Flag for deletion on quarter advance">
-                            <i class="fa-solid ${isFlagged ? 'fa-trash-arrow-up text-rose-400' : 'fa-trash-can'}"></i>
+                        <button onclick="toggleFlagForDeletion('${evt.id}')" class="${evt.flaggedForDeletion ? 'text-rose-400' : 'text-slate-500 hover:text-rose-400'} p-1 transition" title="Flag for deletion">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     ` : ''}
                 `;
@@ -1339,21 +1587,13 @@
 
         /**
          * =========================================================================
-         * BOX SCORE SUMMARY TABLES GENERATION
+         * BOX SCORE TABLE RENDERING
          * =========================================================================
          */
         function renderBoxScoreTables() {
             renderQuarterSummary();
             renderTeamBoxTable(currentGame.homeTeam, 'homeBoxBadge', 'homeBoxTitle', 'homeBoxScoreBody', 'homeBoxScoreFoot');
             renderTeamBoxTable(currentGame.awayTeam, 'awayBoxBadge', 'awayBoxTitle', 'awayBoxScoreBody', 'awayBoxScoreFoot');
-            
-            if (currentGame.hideOpponent) {
-                if (currentGame.myTeamSlot === 'home') document.getElementById('awayBoxScoreContainer').classList.add('hidden');
-                else document.getElementById('homeBoxScoreContainer').classList.add('hidden');
-            } else {
-                document.getElementById('homeBoxScoreContainer').classList.remove('hidden');
-                document.getElementById('awayBoxScoreContainer').classList.remove('hidden');
-            }
         }
 
         function renderQuarterSummary() {
@@ -1405,12 +1645,13 @@
                 const fgPct = s.fga > 0 ? ((s.fgm / s.fga) * 100).toFixed(0) + '%' : '0%';
                 const p3Pct = s.pa3 > 0 ? ((s.pm3 / s.pa3) * 100).toFixed(0) + '%' : '0%';
                 const ftPct = s.fta > 0 ? ((s.ftm / s.fta) * 100).toFixed(0) + '%' : '0%';
+                const totalReb = s.offReb + s.defReb;
 
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-800/40 text-slate-200 border-b border-slate-800/60";
+                tr.className = "hover:bg-slate-800/40 text-slate-200 border-b border-slate-800/80";
                 tr.innerHTML = `
                     <td class="p-2 font-bold text-orange-400">#${player.number}</td>
-                    <td class="p-2 font-semibold text-white truncate max-w-[140px]">${player.name} ${player.onCourt ? '<span class="text-[9px] text-emerald-400 ml-1">(On)</span>' : ''}</td>
+                    <td class="p-2 font-semibold text-white truncate max-w-[140px]">${player.name} ${player.onCourt ? '<span class="text-[9px] text-emerald-400 ml-1">(Active)</span>' : ''}</td>
                     <td class="p-2 text-center font-bold text-amber-300">${s.pts}</td>
                     <td class="p-2 text-center">${s.fgm}/${s.fga}</td>
                     <td class="p-2 text-center text-slate-400">${fgPct}</td>
@@ -1418,12 +1659,12 @@
                     <td class="p-2 text-center text-slate-400">${p3Pct}</td>
                     <td class="p-2 text-center">${s.ftm}/${s.fta}</td>
                     <td class="p-2 text-center text-slate-400">${ftPct}</td>
-                    <td class="p-2 text-center font-semibold">${s.offReb + s.defReb}</td>
+                    <td class="p-2 text-center font-semibold">${totalReb}</td>
                     <td class="p-2 text-center">${s.ast}</td>
                     <td class="p-2 text-center">${s.stl}</td>
                     <td class="p-2 text-center">${s.blk}</td>
-                    <td class="p-2 text-center text-amber-400">${s.to}</td>
-                    <td class="p-2 text-center text-rose-400">${s.pf}</td>
+                    <td class="p-2 text-center text-amber-400/90">${s.to}</td>
+                    <td class="p-2 text-center text-rose-400/90">${s.pf}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1431,6 +1672,7 @@
             const totFgPct = totals.fga > 0 ? ((totals.fgm / totals.fga) * 100).toFixed(0) + '%' : '0%';
             const tot3Pct = totals.pa3 > 0 ? ((totals.pm3 / totals.pa3) * 100).toFixed(0) + '%' : '0%';
             const totFtPct = totals.fta > 0 ? ((totals.ftm / totals.fta) * 100).toFixed(0) + '%' : '0%';
+            const totReb = totals.offReb + totals.defReb;
 
             tfoot.innerHTML = `
                 <tr class="text-white">
@@ -1442,7 +1684,7 @@
                     <td class="p-2 text-center text-slate-400">${tot3Pct}</td>
                     <td class="p-2 text-center">${totals.ftm}/${totals.fta}</td>
                     <td class="p-2 text-center text-slate-400">${totFtPct}</td>
-                    <td class="p-2 text-center">${totals.offReb + totals.defReb}</td>
+                    <td class="p-2 text-center">${totReb}</td>
                     <td class="p-2 text-center">${totals.ast}</td>
                     <td class="p-2 text-center">${totals.stl}</td>
                     <td class="p-2 text-center">${totals.blk}</td>
@@ -1454,22 +1696,219 @@
 
         /**
          * =========================================================================
-         * ROSTER & SAVE / LOAD / DELETE TEAM MANAGEMENT
+         * SAVE, LOAD & DELETE TEAM LINEUPS (INDEXED DB)
+         * =========================================================================
+         */
+        function openSaveTeamModal(teamKey) {
+            targetSaveTeamSlot = teamKey;
+            document.getElementById('saveTeamModal').classList.remove('hidden');
+        }
+
+        function closeSaveTeamModal() {
+            document.getElementById('saveTeamModal').classList.add('hidden');
+        }
+
+        async function confirmOverwriteTeam() {
+            closeSaveTeamModal();
+            const team = targetSaveTeamSlot === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            
+            if (!team.filename) {
+                promptSaveNewTeam();
+                return;
+            }
+
+            await executeSaveTeamToDB(team.filename, targetSaveTeamSlot);
+        }
+
+        function promptSaveNewTeam() {
+            closeSaveTeamModal();
+            document.getElementById('saveFilenameInput').value = `${targetSaveTeamSlot === 'home' ? currentGame.homeTeam.name : currentGame.awayTeam.name}_${new Date().toISOString().slice(0,10)}`;
+            document.getElementById('saveNewFilenameModal').classList.remove('hidden');
+        }
+
+        function closeSaveNewFilenameModal() {
+            document.getElementById('saveNewFilenameModal').classList.add('hidden');
+        }
+
+        async function executeSaveNewTeam() {
+            const filename = document.getElementById('saveFilenameInput').value.trim();
+            if (!filename) {
+                showMessageModal("Invalid Name", "Please enter a valid filename.");
+                return;
+            }
+            closeSaveNewFilenameModal();
+            await executeSaveTeamToDB(filename, targetSaveTeamSlot);
+        }
+
+        async function executeSaveTeamToDB(filename, teamKey) {
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            team.filename = filename;
+
+            const savedTeamObj = {
+                filename,
+                name: team.name,
+                color: team.color,
+                roster: team.roster,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!db) await initDatabase();
+            const tx = db.transaction('teams', 'readwrite');
+            tx.objectStore('teams').put(savedTeamObj);
+
+            updateDeleteTeamButtonsState();
+            saveCurrentGameToStorage();
+            showMessageModal("Team Saved", `Team lineup successfully saved under "${filename}".`);
+        }
+
+        async function openLoadTeamModal(teamKey) {
+            targetSaveTeamSlot = teamKey;
+            const container = document.getElementById('loadTeamListContainer');
+            container.innerHTML = `<div class="text-slate-500 text-xs italic text-center py-4">Loading team files...</div>`;
+            document.getElementById('loadTeamModal').classList.remove('hidden');
+
+            if (!db) await initDatabase();
+            const tx = db.transaction('teams', 'readonly');
+            const req = tx.objectStore('teams').getAll();
+
+            req.onsuccess = () => {
+                const teams = req.result || [];
+                container.innerHTML = '';
+
+                if (teams.length === 0) {
+                    container.innerHTML = `<div class="text-slate-500 text-xs italic text-center py-4">No saved team lineups found. Save a team first!</div>`;
+                    return;
+                }
+
+                teams.forEach(t => {
+                    const item = document.createElement('div');
+                    item.className = "flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs";
+                    item.innerHTML = `
+                        <div class="space-y-0.5">
+                            <div class="font-bold text-white flex items-center space-x-2">
+                                <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${t.color}"></span>
+                                <span>${t.name}</span>
+                                <span class="text-[10px] text-slate-500 font-mono">(${t.filename})</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400">${t.roster.length} players</div>
+                        </div>
+                        <button onclick="loadSelectedTeam('${t.filename}')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">
+                            Load
+                        </button>
+                    `;
+                    container.appendChild(item);
+                });
+            };
+        }
+
+        function closeLoadTeamModal() {
+            document.getElementById('loadTeamModal').classList.add('hidden');
+        }
+
+        async function loadSelectedTeam(filename) {
+            // Duplicate Team Prevention
+            const oppositeTeam = targetSaveTeamSlot === 'home' ? currentGame.awayTeam : currentGame.homeTeam;
+            if (oppositeTeam.filename === filename) {
+                showMessageModal("Duplicate Team Warning", "You cannot load the exact same team lineup into both Home and Away slots simultaneously.");
+                return;
+            }
+
+            const tx = db.transaction('teams', 'readonly');
+            const req = tx.objectStore('teams').get(filename);
+
+            req.onsuccess = () => {
+                const teamData = req.result;
+                if (!teamData) return;
+
+                const teamSlot = targetSaveTeamSlot === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+                teamSlot.filename = teamData.filename;
+                teamSlot.name = teamData.name;
+                teamSlot.color = teamData.color;
+                
+                // Deep clone roster & reset match stats
+                teamSlot.roster = teamData.roster.map(p => ({
+                    id: p.id,
+                    number: p.number,
+                    name: p.name,
+                    onCourt: p.onCourt,
+                    stats: createEmptyStats()
+                }));
+
+                closeLoadTeamModal();
+                updateDeleteTeamButtonsState();
+                renderAllViews();
+                saveCurrentGameToStorage();
+                showMessageModal("Team Loaded", `Loaded "${teamData.name}" into ${targetSaveTeamSlot.toUpperCase()} team.`);
+            };
+        }
+
+        function updateDeleteTeamButtonsState() {
+            const btnDeleteHome = document.getElementById('btnDeleteHomeTeam');
+            const btnDeleteAway = document.getElementById('btnDeleteAwayTeam');
+
+            btnDeleteHome.disabled = !currentGame.homeTeam.filename;
+            btnDeleteAway.disabled = !currentGame.awayTeam.filename;
+
+            if (currentGame.homeTeam.filename) {
+                btnDeleteHome.className = "bg-rose-900/80 hover:bg-rose-800 text-rose-200 border border-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer";
+            } else {
+                btnDeleteHome.className = "bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed";
+            }
+
+            if (currentGame.awayTeam.filename) {
+                btnDeleteAway.className = "bg-rose-900/80 hover:bg-rose-800 text-rose-200 border border-rose-700 px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer";
+            } else {
+                btnDeleteAway.className = "bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed";
+            }
+        }
+
+        function requestDeleteLoadedTeam(teamKey) {
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            if (!team.filename) return;
+
+            const modal = document.getElementById('msgModal');
+            document.getElementById('msgModalTitle').innerText = `Delete Saved Team?`;
+            document.getElementById('msgModalText').innerText = `Are you sure you want to remove "${team.filename}" from the database? This action is NOT reversible.`;
+
+            const btnBox = document.getElementById('msgModalButtons');
+            btnBox.className = "flex space-x-2 pt-2";
+            btnBox.innerHTML = `
+                <button onclick="confirmDeleteTeam('${team.filename}', '${teamKey}')" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-2 rounded-xl text-xs font-bold">Confirm Delete</button>
+                <button onclick="closeMsgModal()" class="w-full bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-semibold">Cancel</button>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        async function confirmDeleteTeam(filename, teamKey) {
+            closeMsgModal();
+            if (!db) await initDatabase();
+            const tx = db.transaction('teams', 'readwrite');
+            tx.objectStore('teams').delete(filename);
+
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            team.filename = null;
+
+            updateDeleteTeamButtonsState();
+            saveCurrentGameToStorage();
+            showMessageModal("Team Deleted", `Team "${filename}" deleted permanently.`);
+        }
+
+        /**
+         * =========================================================================
+         * ROSTER SETUP & MANUALLY ADD PLAYERS
          * =========================================================================
          */
         function renderRosterSetupTab() {
-            document.getElementById('toggleHideOpponent').checked = currentGame.hideOpponent;
-            document.getElementById('myTeamSelect').value = currentGame.myTeamSlot;
             document.getElementById('homeTeamNameInput').value = currentGame.homeTeam.name;
             document.getElementById('homeTeamColorInput').value = currentGame.homeTeam.color;
             document.getElementById('awayTeamNameInput').value = currentGame.awayTeam.name;
             document.getElementById('awayTeamColorInput').value = currentGame.awayTeam.color;
 
-            document.getElementById('btnDeleteHomeTeam').disabled = !currentGame.homeLoadedFilename;
-            document.getElementById('btnDeleteAwayTeam').disabled = !currentGame.awayLoadedFilename;
-
             renderRosterList('home', currentGame.homeTeam.roster, 'homeRosterList');
             renderRosterList('away', currentGame.awayTeam.roster, 'awayRosterList');
+
+            updateDeleteTeamButtonsState();
         }
 
         function renderRosterList(teamKey, roster, containerId) {
@@ -1478,17 +1917,17 @@
 
             roster.forEach(player => {
                 const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-2 bg-slate-950 rounded-xl border border-slate-800 text-xs";
+                item.className = "flex items-center justify-between p-2 bg-slate-950 rounded-lg border border-slate-800/80 text-xs";
                 item.innerHTML = `
                     <div class="flex items-center space-x-2">
                         <span class="font-mono font-bold text-orange-400 w-6">#${player.number}</span>
                         <span class="font-semibold text-white">${player.name}</span>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <span class="text-[10px] ${player.onCourt ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-900 text-slate-500 border-slate-800'} border px-1.5 py-0.5 rounded">
-                            ${player.onCourt ? 'Starter' : 'Bench'}
+                        <span class="text-[10px] ${player.onCourt ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-900 text-slate-400 border-slate-800'} border px-1.5 py-0.5 rounded font-semibold">
+                            ${player.onCourt ? 'Active' : 'Bench'}
                         </span>
-                        <button onclick="removePlayerFromRoster('${teamKey}', '${player.id}')" class="text-slate-500 hover:text-rose-400 p-1">
+                        <button onclick="removePlayerFromRoster('${teamKey}', '${player.id}')" class="text-rose-400 hover:text-rose-300 p-1">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
                     </div>
@@ -1498,27 +1937,32 @@
         }
 
         function addPlayerToRoster(teamKey) {
-            const numInput = document.getElementById(teamKey === 'home' ? 'newHomeJersey' : 'newAwayJersey');
+            const numberInput = document.getElementById(teamKey === 'home' ? 'newHomeJersey' : 'newAwayJersey');
             const nameInput = document.getElementById(teamKey === 'home' ? 'newHomeName' : 'newAwayName');
-            const number = numInput.value.trim();
+
+            const number = numberInput.value.trim();
             const name = nameInput.value.trim();
 
             if (!number || !name) {
-                showMessageModal("Missing Info", "Please enter both jersey number and player name.");
+                showMessageModal("Missing Fields", "Please enter both jersey number and player name.");
                 return;
             }
 
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            team.roster.push({
+            const newPlayer = {
                 id: (teamKey === 'home' ? 'h' : 'a') + Date.now(),
-                number, name,
+                number,
+                name,
                 onCourt: team.roster.filter(p => p.onCourt).length < 5,
                 stats: createEmptyStats()
-            });
+            };
 
-            numInput.value = ''; nameInput.value = '';
+            team.roster.push(newPlayer);
+            numberInput.value = '';
+            nameInput.value = '';
+
             renderRosterSetupTab();
-            renderCourtSection();
+            renderCourtPlayers();
             saveCurrentGameToStorage();
         }
 
@@ -1526,7 +1970,7 @@
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
             team.roster = team.roster.filter(p => p.id !== playerId);
             renderRosterSetupTab();
-            renderCourtSection();
+            renderCourtPlayers();
             saveCurrentGameToStorage();
         }
 
@@ -1538,175 +1982,24 @@
 
             saveCurrentGameToStorage();
             renderAllViews();
-            showMessageModal("Setup Saved", "Team settings updated successfully.");
-        }
-
-        // SAVE TEAM MODAL HANDLERS
-        function openSaveTeamModal(teamKey) {
-            targetTeamForSaveLoad = teamKey;
-            const loadedFile = teamKey === 'home' ? currentGame.homeLoadedFilename : currentGame.awayLoadedFilename;
-            const btnOverwrite = document.getElementById('btnOverwriteTeam');
-
-            if (loadedFile) {
-                btnOverwrite.disabled = false;
-                btnOverwrite.classList.remove('opacity-40', 'cursor-not-allowed');
-            } else {
-                btnOverwrite.disabled = true;
-                btnOverwrite.classList.add('opacity-40', 'cursor-not-allowed');
-            }
-
-            document.getElementById('saveNewFilenameInput').value = '';
-            document.getElementById('saveTeamModal').classList.remove('hidden');
-        }
-
-        function closeSaveTeamModal() { document.getElementById('saveTeamModal').classList.add('hidden'); }
-
-        async function executeSaveTeamOverwrite() {
-            const loadedFile = targetTeamForSaveLoad === 'home' ? currentGame.homeLoadedFilename : currentGame.awayLoadedFilename;
-            if (!loadedFile) return;
-            await saveTeamToIndexedDB(loadedFile);
-            closeSaveTeamModal();
-            showMessageModal("Team Saved", `Updated file "${loadedFile}" in local database.`);
-        }
-
-        async function executeSaveTeamNew() {
-            const filename = document.getElementById('saveNewFilenameInput').value.trim();
-            if (!filename) {
-                showMessageModal("Filename Required", "Please enter a valid unique filename.");
-                return;
-            }
-            await saveTeamToIndexedDB(filename);
-            if (targetTeamForSaveLoad === 'home') currentGame.homeLoadedFilename = filename;
-            else currentGame.awayLoadedFilename = filename;
-            
-            closeSaveTeamModal();
-            renderRosterSetupTab();
-            showMessageModal("New Team Saved", `Saved team as "${filename}".`);
-        }
-
-        async function saveTeamToIndexedDB(filename) {
-            const team = targetTeamForSaveLoad === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            const teamData = {
-                filename,
-                name: team.name,
-                color: team.color,
-                roster: team.roster,
-                dateSaved: new Date().toISOString()
-            };
-
-            if (db) {
-                const tx = db.transaction('teams', 'readwrite');
-                tx.objectStore('teams').put(teamData);
-            }
-        }
-
-        // LOAD TEAM MODAL HANDLERS
-        async function openLoadTeamModal(teamKey) {
-            targetTeamForSaveLoad = teamKey;
-            const container = document.getElementById('savedTeamsListContainer');
-            container.innerHTML = `<div class="text-xs text-slate-500 italic py-3 text-center">Loading saved teams...</div>`;
-
-            if (db) {
-                const tx = db.transaction('teams', 'readonly');
-                const req = tx.objectStore('teams').getAll();
-                req.onsuccess = () => {
-                    const teams = req.result || [];
-                    container.innerHTML = '';
-                    if (teams.length === 0) {
-                        container.innerHTML = `<div class="text-xs text-slate-500 italic py-3 text-center">No saved teams stored.</div>`;
-                        return;
-                    }
-
-                    const otherTeamFile = targetTeamForSaveLoad === 'home' ? currentGame.awayLoadedFilename : currentGame.homeLoadedFilename;
-
-                    teams.forEach(t => {
-                        const isDuplicate = t.filename === otherTeamFile;
-                        const btn = document.createElement('button');
-                        btn.onclick = () => selectAndLoadTeam(t);
-                        btn.disabled = isDuplicate;
-                        btn.className = `w-full text-left p-3 rounded-xl border flex justify-between items-center transition ${
-                            isDuplicate ? 'bg-slate-950 border-slate-800/40 opacity-40 cursor-not-allowed' : 'bg-slate-950 hover:bg-slate-800 border-slate-800'
-                        }`;
-
-                        btn.innerHTML = `
-                            <div>
-                                <span class="text-xs font-black text-white block">${t.filename}</span>
-                                <span class="text-[10px] text-slate-400">${t.name} (${t.roster.length} players)</span>
-                            </div>
-                            ${isDuplicate ? '<span class="text-[10px] text-rose-400 font-bold">Already Loaded</span>' : '<i class="fa-solid fa-chevron-right text-orange-400 text-xs"></i>'}
-                        `;
-                        container.appendChild(btn);
-                    });
-                };
-            }
-
-            document.getElementById('loadTeamModal').classList.remove('hidden');
-        }
-
-        function closeLoadTeamModal() { document.getElementById('loadTeamModal').classList.add('hidden'); }
-
-        function selectAndLoadTeam(teamData) {
-            const team = targetTeamForSaveLoad === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
-            team.name = teamData.name;
-            team.color = teamData.color;
-            team.roster = teamData.roster.map(p => ({ ...p, stats: createEmptyStats() }));
-
-            if (targetTeamForSaveLoad === 'home') currentGame.homeLoadedFilename = teamData.filename;
-            else currentGame.awayLoadedFilename = teamData.filename;
-
-            closeLoadTeamModal();
-            renderAllViews();
-            saveCurrentGameToStorage();
-            showMessageModal("Team Loaded", `Loaded "${teamData.filename}" into ${targetTeamForSaveLoad === 'home' ? 'Home' : 'Away'} slot.`);
-        }
-
-        function deleteLoadedTeam(teamKey) {
-            const filename = teamKey === 'home' ? currentGame.homeLoadedFilename : currentGame.awayLoadedFilename;
-            if (!filename) return;
-
-            document.getElementById('msgModalTitle').innerText = "Delete Saved Team?";
-            document.getElementById('msgModalText').innerText = `Deleting "${filename}" is permanent and cannot be undone.`;
-            
-            const btnContainer = document.getElementById('msgModalButtons');
-            btnContainer.className = "flex space-x-2 w-full pt-1";
-            btnContainer.innerHTML = `
-                <button onclick="closeMsgModal()" class="flex-1 bg-slate-800 text-slate-300 py-2 rounded-xl text-xs font-semibold">Cancel</button>
-                <button onclick="closeMsgModal(); confirmDeleteTeamFromDB('${teamKey}', '${filename}')" class="flex-1 bg-rose-700 hover:bg-rose-600 text-white py-2 rounded-xl text-xs font-bold">Delete File</button>
-            `;
-            
-            document.getElementById('msgModal').classList.remove('hidden');
-        }
-
-        function confirmDeleteTeamFromDB(teamKey, filename) {
-            if (db) {
-                const tx = db.transaction('teams', 'readwrite');
-                tx.objectStore('teams').delete(filename);
-                tx.oncomplete = () => {
-                    if (teamKey === 'home') currentGame.homeLoadedFilename = null;
-                    else currentGame.awayLoadedFilename = null;
-                    renderRosterSetupTab();
-                    showMessageModal("Team Deleted", `Removed "${filename}" from local storage.`);
-                };
-            }
+            showMessageModal("Changes Applied", "Team details and roster edits saved.");
         }
 
         function createNewGamePrompt() {
-            if (confirm("Start a new game? Current match state will be saved.")) {
+            if (confirm("Reset current match and start a new game tracker?")) {
                 currentGame.status = 'COMPLETED';
                 saveCurrentGameToStorage();
 
                 currentGame = {
-                    id: 'game_' + Date.now(),
+                    id: 'match_' + Date.now(),
                     date: new Date().toISOString(),
                     status: 'IN_PROGRESS',
                     synced: false,
+                    hideOpponent: true,
+                    myTeamChoice: 'home',
                     currentQuarter: 1,
-                    hideOpponent: currentGame.hideOpponent,
-                    myTeamSlot: currentGame.myTeamSlot,
-                    homeLoadedFilename: currentGame.homeLoadedFilename,
-                    awayLoadedFilename: currentGame.awayLoadedFilename,
-                    homeTeam: { name: currentGame.homeTeam.name, color: currentGame.homeTeam.color, timeoutsTaken: 0, foulsThisQuarter: 0, scoreByQuarter: [0,0,0,0], roster: [] },
-                    awayTeam: { name: currentGame.awayTeam.name, color: currentGame.awayTeam.color, timeoutsTaken: 0, foulsThisQuarter: 0, scoreByQuarter: [0,0,0,0], roster: [] },
+                    homeTeam: { filename: null, name: currentGame.homeTeam.name, color: currentGame.homeTeam.color, timeoutsTaken: 0, foulsThisQuarter: 0, scoreByQuarter: [0,0,0,0], roster: [] },
+                    awayTeam: { filename: null, name: currentGame.awayTeam.name, color: currentGame.awayTeam.color, timeoutsTaken: 0, foulsThisQuarter: 0, scoreByQuarter: [0,0,0,0], roster: [] },
                     events: []
                 };
 
@@ -1719,7 +2012,7 @@
 
         /**
          * =========================================================================
-         * SAVED MATCHES, CLOUD SYNC & EXPORT TOOLS
+         * SAVED MATCHES ARCHIVE & EXPORT UTILITIES
          * =========================================================================
          */
         async function loadSavedMatchesList() {
@@ -1727,31 +2020,34 @@
             container.innerHTML = `<div class="text-slate-500 text-xs italic text-center py-4">Loading saved games...</div>`;
 
             if (!db) await initDatabase();
-
             const tx = db.transaction('matches', 'readonly');
-            const req = tx.objectStore('matches').getAll();
+            const request = tx.objectStore('matches').getAll();
 
-            req.onsuccess = () => {
-                const matches = req.result || [];
+            request.onsuccess = () => {
+                const matches = request.result || [];
                 container.innerHTML = '';
+
                 if (matches.length === 0) {
-                    container.innerHTML = `<div class="text-slate-500 text-xs italic text-center py-4">No saved games found.</div>`;
+                    container.innerHTML = `<div class="text-slate-500 text-xs italic text-center py-4">No saved games found in local database.</div>`;
                     return;
                 }
 
                 matches.sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(m => {
                     const item = document.createElement('div');
                     item.className = "flex flex-wrap items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs gap-2";
+                    
+                    const homeTot = calculateTeamTotal(m.homeTeam);
+                    const awayTot = calculateTeamTotal(m.awayTeam);
                     const formattedDate = new Date(m.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                     item.innerHTML = `
-                        <div>
-                            <div class="flex items-center space-x-2 font-black text-white text-sm">
-                                <span>${m.homeTeam.name} (${calculateTeamTotal(m.homeTeam)})</span>
+                        <div class="space-y-1">
+                            <div class="flex items-center space-x-2 font-bold text-white text-sm">
+                                <span>${m.homeTeam.name} (${homeTot})</span>
                                 <span class="text-orange-400">vs</span>
-                                <span>${m.awayTeam.name} (${calculateTeamTotal(m.awayTeam)})</span>
+                                <span>${m.awayTeam.name} (${awayTot})</span>
                             </div>
-                            <div class="flex items-center space-x-3 text-[11px] text-slate-400 mt-0.5">
+                            <div class="flex items-center space-x-3 text-[11px] text-slate-400">
                                 <span><i class="fa-regular fa-calendar mr-1"></i>${formattedDate}</span>
                                 <span><i class="fa-solid fa-list-check mr-1"></i>${m.events.length} plays</span>
                                 <span class="${m.synced ? 'text-emerald-400' : 'text-amber-400'} font-semibold">
@@ -1761,8 +2057,12 @@
                         </div>
 
                         <div class="flex items-center space-x-2">
-                            <button onclick="loadMatchToTracker('${m.id}')" class="bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">Load Match</button>
-                            <button onclick="deleteSavedMatch('${m.id}')" class="text-slate-500 hover:text-rose-400 p-1.5"><i class="fa-solid fa-trash-can"></i></button>
+                            <button onclick="loadMatchToTracker('${m.id}')" class="bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                                Load
+                            </button>
+                            <button onclick="deleteSavedMatch('${m.id}')" class="text-rose-400 hover:text-rose-300 p-1.5">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
                         </div>
                     `;
                     container.appendChild(item);
@@ -1772,14 +2072,35 @@
             };
         }
 
-        async function updateSyncCounts(matchesList = null) {
-            let matches = matchesList;
-            if (!matches && db) {
+        async function loadMatchToTracker(matchId) {
+            const tx = db.transaction('matches', 'readonly');
+            const req = tx.objectStore('matches').get(matchId);
+
+            req.onsuccess = () => {
+                if (req.result) {
+                    currentGame = req.result;
+                    renderAllViews();
+                    switchTab('tracker');
+                    showMessageModal("Match Loaded", "Loaded match archive into live tracker.");
+                }
+            };
+        }
+
+        async function deleteSavedMatch(matchId) {
+            if (confirm("Delete this saved match from local database?")) {
+                const tx = db.transaction('matches', 'readwrite');
+                tx.objectStore('matches').delete(matchId);
+                loadSavedMatchesList();
+            }
+        }
+
+        function updateSyncCounts(matchesList = null) {
+            if (!matchesList && db) {
                 const tx = db.transaction('matches', 'readonly');
                 const req = tx.objectStore('matches').getAll();
                 req.onsuccess = () => processCounts(req.result || []);
-            } else if (matches) {
-                processCounts(matches);
+            } else if (matchesList) {
+                processCounts(matchesList);
             }
         }
 
@@ -1787,147 +2108,124 @@
             const total = matches.length;
             const synced = matches.filter(m => m.synced).length;
             const pending = total - synced;
+
             document.getElementById('statLocalMatches').innerText = total;
             document.getElementById('statPendingSync').innerText = pending;
             document.getElementById('statSyncedMatches').innerText = synced;
             document.getElementById('unsyncedCount').innerText = `${pending} Unsynced`;
         }
 
-        async function loadMatchToTracker(matchId) {
-            if (db) {
-                const tx = db.transaction('matches', 'readonly');
-                const req = tx.objectStore('matches').get(matchId);
-                req.onsuccess = () => {
-                    if (req.result) {
-                        currentGame = req.result;
-                        renderAllViews();
-                        switchTab('tracker');
-                        showMessageModal("Match Loaded", "Loaded match archive into active tracker.");
-                    }
-                };
-            }
-        }
-
-        async function deleteSavedMatch(matchId) {
-            if (confirm("Delete this saved match record?")) {
-                if (db) {
-                    const tx = db.transaction('matches', 'readwrite');
-                    tx.objectStore('matches').delete(matchId);
-                    tx.oncomplete = () => loadSavedMatchesList();
-                }
-            }
-        }
-
         function triggerCloudSync() {
             if (!navigator.onLine) {
-                showMessageModal("Offline", "You are currently offline. Matches remain safely stored locally.");
+                showMessageModal("Offline Mode Active", "Cannot sync to cloud while device is offline.");
                 return;
             }
 
-            currentGame.synced = true;
-            saveCurrentGameToStorage();
-
+            // Simulate Cloud Upload Sync
             if (db) {
                 const tx = db.transaction('matches', 'readwrite');
                 const store = tx.objectStore('matches');
                 const req = store.getAll();
+
                 req.onsuccess = () => {
                     const matches = req.result || [];
-                    matches.forEach(m => { m.synced = true; store.put(m); });
+                    matches.forEach(m => {
+                        m.synced = true;
+                        store.put(m);
+                    });
                     loadSavedMatchesList();
-                    showMessageModal("Sync Complete", "All match box scores synchronized with cloud server.");
+                    showMessageModal("Cloud Sync Complete", "All local match archives synchronized successfully.");
                 };
             }
         }
 
+        /**
+         * =========================================================================
+         * EXPORT DATA FORMATTERS (CSV, JSON & TEXT REPORT)
+         * =========================================================================
+         */
         function exportGameJSON() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentGame, null, 2));
-            const anchor = document.createElement('a');
-            anchor.setAttribute("href", dataStr);
-            anchor.setAttribute("download", `BoxScore_${currentGame.homeTeam.name}_vs_${currentGame.awayTeam.name}_${Date.now()}.json`);
-            document.body.appendChild(anchor);
-            anchor.click();
-            anchor.remove();
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `StarTracker_${currentGame.homeTeam.name}_vs_${currentGame.awayTeam.name}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
         }
 
         function exportGameCSV() {
             let csv = "Team,Jersey,Player,PTS,FGM,FGA,3PM,3PA,FTM,FTA,OFFREB,DEFREB,AST,STL,BLK,TO,PF\n";
-            const appendTeam = (team) => {
-                team.roster.forEach(p => {
+            
+            const appendRoster = (teamName, roster) => {
+                roster.forEach(p => {
                     const s = p.stats;
-                    csv += `"${team.name}",${p.number},"${p.name}",${s.pts},${s.fgm},${s.fga},${s.pm3},${s.pa3},${s.ftm},${s.fta},${s.offReb},${s.defReb},${s.ast},${s.stl},${s.blk},${s.to},${s.pf}\n`;
+                    csv += `"${teamName}",${p.number},"${p.name}",${s.pts},${s.fgm},${s.fga},${s.pm3},${s.pa3},${s.ftm},${s.fta},${s.offReb},${s.defReb},${s.ast},${s.stl},${s.blk},${s.to},${s.pf}\n`;
                 });
             };
-            appendTeam(currentGame.homeTeam);
-            appendTeam(currentGame.awayTeam);
 
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `BoxScore_${currentGame.homeTeam.name}_vs_${currentGame.awayTeam.name}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            appendRoster(currentGame.homeTeam.name, currentGame.homeTeam.roster);
+            appendRoster(currentGame.awayTeam.name, currentGame.awayTeam.roster);
+
+            const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `StarTracker_${currentGame.homeTeam.name}_vs_${currentGame.awayTeam.name}.csv`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
         }
 
         function copyBoxScoreReport() {
-            let text = `=======================================\n`;
-            text += `BASKETBALL BOX SCORE SUMMARY\n`;
-            text += `${currentGame.homeTeam.name} (${calculateTeamTotal(currentGame.homeTeam)}) vs ${currentGame.awayTeam.name} (${calculateTeamTotal(currentGame.awayTeam)})\n`;
-            text += `Date: ${new Date(currentGame.date).toLocaleDateString()}\n`;
-            text += `=======================================\n\n`;
+            let report = `=== StarTracker Box Score Summary ===\n`;
+            report += `${currentGame.homeTeam.name}: ${calculateTeamTotal(currentGame.homeTeam)} | ${currentGame.awayTeam.name}: ${calculateTeamTotal(currentGame.awayTeam)}\n\n`;
 
-            const formatTeamText = (team) => {
-                let str = `--- ${team.name.toUpperCase()} ---\n`;
-                str += `PTS | FGM/A | 3PM/A | FTM/A | REB | AST | STL | BLK | TO | PF | PLAYER\n`;
+            const formatTeam = (team) => {
+                let txt = `${team.name.toUpperCase()}\n`;
                 team.roster.forEach(p => {
                     const s = p.stats;
-                    str += `${s.pts.toString().padStart(3)} | ${s.fgm}/${s.fga} | ${s.pm3}/${s.pa3} | ${s.ftm}/${s.fta} | ${s.offReb+s.defReb} | ${s.ast} | ${s.stl} | ${s.blk} | ${s.to} | ${s.pf} | #${p.number} ${p.name}\n`;
+                    txt += `#${p.number} ${p.name}: ${s.pts} PTS | ${s.fgm}/${s.fga} FG | ${s.ast} AST | ${s.offReb + s.defReb} REB | ${s.pf} PF\n`;
                 });
-                return str + `\n`;
+                return txt + '\n';
             };
 
-            text += formatTeamText(currentGame.homeTeam);
-            text += formatTeamText(currentGame.awayTeam);
+            report += formatTeam(currentGame.homeTeam);
+            report += formatTeam(currentGame.awayTeam);
 
+            // Clipboard copy workaround for restricted iframe environments
             const textArea = document.createElement("textarea");
-            textArea.value = text;
+            textArea.value = report;
             document.body.appendChild(textArea);
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
 
-            showMessageModal("Report Copied", "Box score report copied to clipboard.");
+            showMessageModal("Report Copied", "Plain-text match box score summary copied to clipboard.");
         }
 
         /**
          * =========================================================================
-         * GENERAL MODAL UTILITIES
+         * UTILITY MODAL & INITIALIZATION
          * =========================================================================
          */
         function showMessageModal(title, text) {
             document.getElementById('msgModalTitle').innerText = title;
             document.getElementById('msgModalText').innerText = text;
-            
-            const btnContainer = document.getElementById('msgModalButtons');
-            btnContainer.className = "flex space-x-2 w-full pt-1";
-            btnContainer.innerHTML = `<button onclick="closeMsgModal()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded-xl text-xs font-bold">OK</button>`;
-
+            const btnBox = document.getElementById('msgModalButtons');
+            btnBox.className = "flex space-x-2 pt-2";
+            btnBox.innerHTML = `<button onclick="closeMsgModal()" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 rounded-xl text-xs font-bold">OK</button>`;
             document.getElementById('msgModal').classList.remove('hidden');
         }
 
-        function closeMsgModal() { document.getElementById('msgModal').classList.add('hidden'); }
+        function closeMsgModal() {
+            document.getElementById('msgModal').classList.add('hidden');
+        }
 
-        /**
-         * =========================================================================
-         * APP INITIALIZATION
-         * =========================================================================
-         */
-        window.onload = async function() {
+        // Window Load Handler
+        window.onload = async function () {
             await initDatabase();
-            updateOnlineStatus();
             await loadGameFromStorage();
+            updateOnlineStatus();
         };
     </script>
 </body>
