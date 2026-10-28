@@ -82,12 +82,33 @@
             grid-template-columns: repeat(7, minmax(0, 1fr));
             gap: 0.35rem;
         }
+
+        /* Match Completed / Locked State Styles */
+        body.match-locked button:not(#tab-tracker):not(#tab-boxscore):not(#tab-roster):not(#tab-matches):not(#resetMatchBtn):not(#syncCloudBtn):not(.archive-open-btn):not([onclick*="copyBoxScoreReport"]):not([onclick*="exportGameCSV"]):not([onclick*="exportGameJSON"]):not([onclick*="executeNewGame"]):not([onclick*="closeMsgModal"]),
+        body.match-locked input:not(#hideOpponentToggle),
+        body.match-locked select,
+        body.match-locked .draggable-bench,
+        body.match-locked [onclick*="promptActivePlayerSub"],
+        body.match-locked [onclick*="promptTapSub"],
+        body.match-locked [onclick*="toggleTimeout"],
+        body.match-locked [onclick*="requestAdvanceQuarter"],
+        body.match-locked [onclick*="undoLastPlay"],
+        body.match-locked [onclick*="recordStatDirect"],
+        body.match-locked [onclick*="addPlayerToRoster"],
+        body.match-locked [onclick*="saveRosterChanges"],
+        body.match-locked [onclick*="openSaveTeamModal"],
+        body.match-locked [onclick*="openLoadTeamModal"],
+        body.match-locked [onclick*="requestDeleteLoadedTeam"] {
+            opacity: 0.5;
+            pointer-events: none !important;
+            cursor: not-allowed !important;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-orange-500 selection:text-white pb-16 md:pb-0">
 
-    <!-- TOP APPLICATION HEADER WITH INTEGRATED COMPACT SCOREBOARD & 2x2 NAV BADGES -->
-    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-2 sm:px-3 py-2 shadow-xl">
+    <!-- TOP APPLICATION HEADER WITH INTEGRATED SCOREBOARD & NAV BADGES -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-2 sm:px-3 py-1 shadow-xl">
         <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
             
             <!-- LEFT: STARTRACKER BRANDING -->
@@ -103,61 +124,67 @@
                 </div>
             </div>
 
-            <!-- CENTER: RESIZED COMPACT TOP SCOREBOARD BAR -->
-            <div class="flex-1 max-w-xl mx-1 sm:mx-2 bg-slate-950/80 rounded-xl p-1.5 border border-slate-800/90 shadow-inner overflow-hidden">
-                <div class="grid grid-cols-12 gap-1 items-center">
+            <!-- CENTER: RESIZED & RECONFIGURED SCOREBOARD BAR -->
+            <div class="flex-1 max-w-xl mx-1 sm:mx-2 bg-slate-950/80 rounded-xl px-2 py-[12px] border border-slate-800/90 shadow-inner overflow-hidden flex items-center">
+                <div class="grid grid-cols-12 gap-1.5 items-center w-full">
                     
-                    <!-- HOME TEAM SUB-PANEL -->
-                    <div class="col-span-5 flex items-center justify-between bg-slate-900/90 px-1.5 sm:px-2 py-1 rounded-lg border border-slate-800/80">
-                        <!-- Name & Color -->
-                        <div class="flex items-center space-x-1 min-w-0 truncate">
-                            <span class="w-2.5 h-2.5 rounded-full shrink-0" id="homeColorBadge"></span>
-                            <span class="text-[10px] sm:text-xs font-black tracking-tight truncate text-white uppercase" id="homeScoreName">WARRIORS</span>
+                    <!-- HOME TEAM SUB-PANEL (Clicking anywhere toggles timeout) -->
+                    <div class="col-span-5 flex items-center bg-slate-900/90 px-2 py-1.5 rounded-lg border border-slate-800/80 h-full cursor-pointer hover:border-slate-700 transition" onclick="toggleTimeout('home')" title="Tap to toggle Home Timeout">
+                        <!-- Left: Team Name, Timeouts & Fouls stacked -->
+                        <div class="flex flex-col flex-1 min-w-0 justify-between h-full py-0.5">
+                            <div class="flex items-center space-x-1 min-w-0 truncate">
+                                <span class="w-3 h-3 rounded-full shrink-0" id="homeColorBadge"></span>
+                                <span class="text-xs sm:text-sm font-black tracking-tight truncate text-white uppercase" id="homeScoreName">WARRIORS</span>
+                            </div>
+                            <!-- Enlarged Timeout Dots with 'T' & Fouls Counter on a row below -->
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 font-bold" onclick="event.stopPropagation(); toggleTimeout('home');">
+                                <div id="homeTimeoutDots" class="flex space-x-1.5 cursor-pointer">
+                                    <!-- Populated dynamically via renderTimeoutDots -->
+                                </div>
+                                <div class="uppercase tracking-wider">
+                                    <span class="text-rose-400 font-mono text-[18px] font-black">F:<span id="homeFouls">0</span></span>
+                                </div>
+                            </div>
                         </div>
-                        <!-- Score, Fouls & Timeouts -->
-                        <div class="flex items-center space-x-1.5 ml-1 shrink-0">
-                            <div class="text-xs text-slate-400 font-bold hidden xl:block">
-                                F:<span id="homeFouls" class="text-amber-400 font-mono text-xs font-black">0</span>
-                            </div>
-                            <div id="homeTimeoutDots" class="hidden md:flex space-x-0.5 cursor-pointer" onclick="toggleTimeout('home')" title="Tap to toggle Home Timeout">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                            </div>
-                            <span class="text-base sm:text-xl font-black font-mono tracking-tight text-white leading-none" id="homeScore">0</span>
+                        <!-- Right: Large Score spanning both rows -->
+                        <div class="pl-2.5 ml-2 border-l border-slate-800 flex items-center shrink-0">
+                            <span class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white leading-none" id="homeScore">0</span>
                         </div>
                     </div>
 
                     <!-- CENTER QUARTER STATUS & ADVANCE BUTTON -->
-                    <div class="col-span-2 flex items-center justify-center space-x-1">
-                        <span class="text-[9px] sm:text-[10px] font-black uppercase text-orange-400 bg-orange-950/80 px-1.5 py-0.5 rounded border border-orange-800/60 font-mono" id="periodDisplay">
-                            Q1
-                        </span>
-                        <button onclick="requestAdvanceQuarter()" title="Advance Quarter" class="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white p-1 rounded text-[9px] font-bold shadow active:scale-95 transition border border-amber-500/30">
-                            <i class="fa-solid fa-angles-right text-[9px]"></i>
+                    <div class="col-span-2 flex items-center space-x-1 h-full py-1">
+                        <!-- Quarter Status spanning two rows and 3/4 width, now clickable -->
+                        <div onclick="requestAdvanceQuarter()" title="Advance Quarter" class="w-3/4 flex items-center justify-center bg-orange-950/80 hover:bg-orange-900/80 rounded border border-orange-800/60 font-mono text-sm sm:text-base font-black uppercase text-orange-400 h-full shadow-inner cursor-pointer transition active:scale-95">
+                            <span style="font-size:2rem;" id="periodDisplay">Q1</span>
+                        </div>
+                        <!-- Advance button spanning two rows and 1/4 width -->
+                        <button onclick="requestAdvanceQuarter()" title="Advance Quarter" class="w-1/4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded shadow active:scale-95 transition border border-amber-500/30 flex items-center justify-center h-full">
+                            <i class="fa-solid fa-angles-right text-xs"></i>
                         </button>
                     </div>
 
-                    <!-- AWAY TEAM SUB-PANEL -->
-                    <div id="awayHeaderPanel" class="col-span-5 flex items-center justify-between bg-slate-900/90 px-1.5 sm:px-2 py-1 rounded-lg border border-slate-800/80">
-                        <!-- Score, Fouls & Timeouts -->
-                        <div class="flex items-center space-x-1.5 mr-1 shrink-0">
-                            <span class="text-base sm:text-xl font-black font-mono tracking-tight text-white leading-none" id="awayScore">0</span>
-                            <div id="awayTimeoutDots" class="hidden md:flex space-x-0.5 cursor-pointer" onclick="toggleTimeout('away')" title="Tap to toggle Away Timeout">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-950 border border-emerald-800/60"></span>
-                            </div>
-                            <div class="text-xs text-slate-400 font-bold hidden xl:block">
-                                F:<span id="awayFouls" class="text-amber-400 font-mono text-xs font-black">0</span>
-                            </div>
+                    <!-- AWAY TEAM SUB-PANEL (Clicking anywhere toggles timeout) -->
+                    <div id="awayHeaderPanel" class="col-span-5 flex items-center bg-slate-900/90 px-2 py-1.5 rounded-lg border border-slate-800/80 justify-between h-full cursor-pointer hover:border-slate-700 transition" onclick="toggleTimeout('away')" title="Tap to toggle Away Timeout">
+                        <!-- Left: Large Score spanning both rows -->
+                        <div class="pr-2.5 mr-2 border-r border-slate-800 flex items-center shrink-0">
+                            <span class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white leading-none" id="awayScore">0</span>
                         </div>
-                        <!-- Name & Color -->
-                        <div class="flex items-center space-x-1 min-w-0 truncate justify-end">
-                            <span class="text-[10px] sm:text-xs font-black tracking-tight truncate text-white uppercase" id="awayScoreName">TITANS</span>
-                            <span class="w-2.5 h-2.5 rounded-full shrink-0" id="awayColorBadge"></span>
+                        <!-- Right: Team Name, Timeouts & Fouls stacked -->
+                        <div class="flex flex-col flex-1 min-w-0 justify-between h-full py-0.5 items-end text-right">
+                            <div class="flex items-center space-x-1 min-w-0 truncate justify-end">
+                                <span class="text-xs sm:text-sm font-black tracking-tight truncate text-white uppercase" id="awayScoreName">TITANS</span>
+                                <span class="w-3 h-3 rounded-full shrink-0" id="awayColorBadge"></span>
+                            </div>
+                            <!-- Enlarged Timeout Dots with 'T' & Fouls Counter on a row below -->
+                            <div class="flex items-center justify-between w-full text-[11px] text-slate-400 font-bold flex-row-reverse" onclick="event.stopPropagation(); toggleTimeout('away');">
+                                <div id="awayTimeoutDots" class="flex space-x-1.5 cursor-pointer">
+                                    <!-- Populated dynamically via renderTimeoutDots -->
+                                </div>
+                                <div class="uppercase tracking-wider">
+                                    <span class="text-rose-400 font-mono text-[18px] font-black">F:<span id="awayFouls">0</span></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -413,7 +440,7 @@
                 </div>
 
                 <div class="pt-2 flex justify-start">
-                    <button onclick="createNewGamePrompt()" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-2">
+                    <button id="resetMatchBtn" onclick="createNewGamePrompt()" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg flex items-center space-x-2">
                         <i class="fa-solid fa-plus-circle"></i>
                         <span>Reset Match / New Game</span>
                     </button>
@@ -544,7 +571,7 @@
                         </h3>
                         <p class="text-xs text-slate-400 mt-0.5">Games stored securely in IndexedDB on your mobile device.</p>
                     </div>
-                    <button onclick="triggerCloudSync()" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
+                    <button id="syncCloudBtn" onclick="triggerCloudSync()" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
                         <i class="fa-solid fa-rotate"></i>
                         <span>Sync Cloud</span>
                     </button>
@@ -879,26 +906,29 @@
             } else {
                 team.timeoutsTaken = 0;
             }
-            logEvent(`${team.name} Timeout Tapped (${team.timeoutsTaken}/4)`, teamKey, null, 'TIMEOUT');
+            logEvent(`${team.name} Timeout - (${team.timeoutsTaken}/4)`, teamKey, null, 'TIMEOUT');
             renderScoreboard();
             saveCurrentGameToStorage();
         }
 
         function renderTimeoutDots(containerId, takenCount, isDisabled = false) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            for (let i = 1; i <= 4; i++) {
-                const dot = document.createElement('span');
-                if (isDisabled) {
-                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-900 border border-slate-800 opacity-40";
-                } else if (i <= takenCount) {
-                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/80 border border-emerald-300 animate-pulse";
-                } else {
-                    dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-950 border border-emerald-800/60";
-                }
-                container.appendChild(dot);
-            }
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    for (let i = 1; i <= 4; i++) {
+        const dot = document.createElement('span');
+        if (isDisabled) {
+            dot.className = "w-4 h-4 rounded-sm flex items-center justify-center font-black text-[10px] bg-slate-900 border border-slate-800 text-slate-600 opacity-40";
+        } else if (i <= takenCount) {
+            // Active timeout: emerald background with a bright yellow 'T'
+            dot.className = "w-4 h-4 rounded-sm flex items-center justify-center font-black text-[10px] bg-emerald-500 shadow-sm shadow-emerald-500/80 border border-emerald-300 text-yellow-100";
+        } else {
+            // Inactive/Available timeout: dim emerald background with a dim emerald 'T'
+            dot.className = "w-4 h-4 rounded-sm flex items-center justify-center font-black text-[10px] bg-emerald-950 border border-emerald-800/60 text-emerald-900";
         }
+        dot.innerText = 'T';
+        container.appendChild(dot);
+    }
+}
 
         /**
          * =========================================================================
@@ -956,9 +986,9 @@
 
             if (isEndMatch) {
                 currentGame.status = 'COMPLETED';
-                logEvent(`MATCH COMPLETED - Final Score: ${currentGame.homeTeam.name} ${calculateTeamTotal(currentGame.homeTeam)} - ${calculateTeamTotal(currentGame.awayTeam)} ${currentGame.awayTeam.name}`, 'home', null);
+                logEvent(`MATCH COMPLETED - Final Score: ${currentGame.homeTeam.name} ${calculateTeamTotal(currentGame.homeTeam)} - ${calculateTeamTotal(currentGame.awayTeam)} ${currentGame.awayTeam.name}`, 'home', null, 'SYSTEM');
                 saveCurrentGameToStorage();
-                renderScoreboard();
+                renderAllViews();
                 showMessageModal("Match Completed", "The match status has been marked as completed and stored in local database archive.");
                 return;
             }
@@ -967,7 +997,7 @@
             currentGame.homeTeam.foulsThisQuarter = 0;
             currentGame.awayTeam.foulsThisQuarter = 0;
 
-            logEvent(`QUARTER ADVANCED to Q${currentGame.currentQuarter}`, 'home', null);
+            logEvent(`QUARTER ADVANCED to Q${currentGame.currentQuarter}`, 'home', null, 'SYSTEM');
 
             renderScoreboard();
             renderPlayLog();
@@ -1165,8 +1195,43 @@
                 return;
             }
 
-            if (topEvent.statType === 'TIMEOUT' || topEvent.description.includes('QUARTER')) {
-                currentGame.events.shift();
+            // Prevent undoing system notifications like Quarter Advances or Match Completion
+            if (topEvent.statType === 'SYSTEM' || topEvent.description.includes('QUARTER') || topEvent.description.includes('MATCH COMPLETED')) {
+                showMessageModal("Action Protected", "Quarter advancement and match completion notifications cannot be undone.");
+                return;
+            }
+
+            // Handle Sub inversions during undo
+            if (topEvent.statType === 'SUB') {
+                const evt = currentGame.events.shift();
+                const team = evt.teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+                
+                const inPlayer = team.roster.find(p => p.id === evt.inPlayerId);
+                const outPlayer = team.roster.find(p => p.id === evt.outPlayerId);
+
+                if (inPlayer && outPlayer) {
+                    inPlayer.onCourt = false;  // Send incoming player back to bench
+                    outPlayer.onCourt = true;  // Put original player back on court
+                }
+
+                renderCourtPlayers();
+                renderPlayLog();
+                saveCurrentGameToStorage();
+                return;
+            }
+
+            if (topEvent.statType === 'TIMEOUT') {
+                const evt = currentGame.events.shift();
+                
+                if (evt.teamKey) {
+                    const team = evt.teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+                    if (team.timeoutsTaken > 0) {
+                        team.timeoutsTaken--;
+                    }
+                    renderScoreboard();
+                    saveCurrentGameToStorage();
+                }
+
                 renderPlayLog();
                 return;
             }
@@ -1239,6 +1304,13 @@
             const isSingle = currentGame.hideOpponent;
             const myTeam = currentGame.myTeamChoice;
 
+            // Apply completion lock to body if match is completed
+            if (currentGame && currentGame.status === 'COMPLETED') {
+                document.body.classList.add('match-locked');
+            } else {
+                document.body.classList.remove('match-locked');
+            }
+
             document.getElementById('hideOpponentToggle').checked = isSingle;
             document.getElementById('myTeamChoice').value = myTeam;
             document.getElementById('myTeamSelectorBox').style.display = isSingle ? 'flex' : 'none';
@@ -1301,11 +1373,27 @@
             const isAwayMasked = isSingle && myTeam === 'home';
 
             document.getElementById('homeScore').innerText = isHomeMasked ? '--' : calculateTeamTotal(currentGame.homeTeam);
-            document.getElementById('homeFouls').innerText = isHomeMasked ? '-' : currentGame.homeTeam.foulsThisQuarter;
+            
+            // Foul indicator logic for Home Team (> 4 fouls displays a basketball icon)
+            const homeFoulsEl = document.getElementById('homeFouls');
+            if (isHomeMasked) {
+                homeFoulsEl.innerHTML = '-';
+            } else {
+                const homeFouls = currentGame.homeTeam.foulsThisQuarter;
+                homeFoulsEl.innerHTML = homeFouls > 4 ? '<i class="fa-solid fa-basketball text-orange-400"></i>' : homeFouls;
+            }
             renderTimeoutDots('homeTimeoutDots', currentGame.homeTeam.timeoutsTaken, isHomeMasked);
 
             document.getElementById('awayScore').innerText = isAwayMasked ? '--' : calculateTeamTotal(currentGame.awayTeam);
-            document.getElementById('awayFouls').innerText = isAwayMasked ? '-' : currentGame.awayTeam.foulsThisQuarter;
+            
+            // Foul indicator logic for Away Team (> 4 fouls displays a basketball icon)
+            const awayFoulsEl = document.getElementById('awayFouls');
+            if (isAwayMasked) {
+                awayFoulsEl.innerHTML = '-';
+            } else {
+                const awayFouls = currentGame.awayTeam.foulsThisQuarter;
+                awayFoulsEl.innerHTML = awayFouls > 4 ? '<i class="fa-solid fa-basketball text-orange-400"></i>' : awayFouls;
+            }
             renderTimeoutDots('awayTimeoutDots', currentGame.awayTeam.timeoutsTaken, isAwayMasked);
 
             document.getElementById('periodDisplay').innerText = currentGame.currentQuarter > 4 ? `OT${currentGame.currentQuarter - 4}` : `Q${currentGame.currentQuarter}`;
@@ -1341,9 +1429,9 @@
 
 				card.innerHTML = `
 				    <div class="flex items-stretch space-x-2.5">
-				        <!-- Huge Jersey Number Box spanning full height -->
-				        <div class="flex items-center justify-center bg-slate-900 px-2 py-1 rounded-xl border border-slate-800/80 min-w-[54px]">
-				            <span class="text-3xl sm:text-4xl font-black font-mono text-orange-400 tracking-tighter leading-none">#${formattedNumber}</span>
+				        <!-- Huge Jersey Number Box spanning full height (Clickable for Sub Out) -->
+				        <div onclick="promptActivePlayerSub('${teamKey}', '${player.id}')" title="Tap to Substitute Player" class="flex items-center justify-center bg-slate-900 hover:bg-slate-800 px-2 py-1 rounded-xl border border-slate-800/80 min-w-[54px] cursor-pointer transition group">
+				            <span class="text-3xl sm:text-4xl font-black font-mono text-orange-400 group-hover:text-orange-300 tracking-tighter leading-none">#${formattedNumber}</span>
 				        </div>
        
                         <!-- Right Container: Player Name & 5-Box Foul Indicator on top, Summary Box below -->
@@ -1471,22 +1559,94 @@
             document.getElementById('msgModalText').innerText = "Select player on court to replace:";
 
             const btnBox = document.getElementById('msgModalButtons');
-            btnBox.className = "flex flex-col space-y-1.5 pt-2";
+            btnBox.className = "flex flex-col space-y-2 pt-2";
             btnBox.innerHTML = '';
 
-            activeOnCourt.forEach(courtP => {
-                const subBtn = document.createElement('button');
-                subBtn.className = "w-full bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-xl text-xs font-bold border border-slate-700 text-left flex justify-between";
-                subBtn.innerHTML = `<span>Replace #${courtP.number} ${courtP.name}</span> <i class="fa-solid fa-arrows-rotate text-orange-400"></i>`;
-                subBtn.onclick = () => {
-                    performSubstitution(teamKey, benchPlayerId, courtP.id);
+            // Grid container for active on-court player tiles matching the bench/tile style
+            const tilesGrid = document.createElement('div');
+            tilesGrid.className = "grid grid-cols-5 gap-2 max-h-[220px] overflow-y-auto p-1 bg-slate-950/60 rounded-xl border border-slate-800";
+
+            activeOnCourt.forEach(player => {
+                const tile = document.createElement('div');
+                tile.className = "flex flex-col items-center justify-center p-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-orange-500 transition shadow-sm text-center cursor-pointer min-h-[72px]";
+                
+                const parts = player.name.trim().split(/\s+/);
+                const firstName = parts[0] || "";
+                const surname = parts.slice(1).join(" ") || "&nbsp;";
+
+                tile.innerHTML = `
+                    <span class="text-xl sm:text-2xl font-black font-mono text-orange-400 leading-none">#${player.number}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full mt-0.5 block">${firstName}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full">${surname}</span>
+                `;
+
+                tile.onclick = () => {
+                    performSubstitution(teamKey, benchPlayerId, player.id);
                     closeMsgModal();
                 };
-                btnBox.appendChild(subBtn);
+
+                tilesGrid.appendChild(tile);
             });
 
+            btnBox.appendChild(tilesGrid);
+
             const cancelBtn = document.createElement('button');
-            cancelBtn.className = "w-full bg-slate-900 text-slate-400 p-2 rounded-xl text-xs font-semibold";
+            cancelBtn.className = "w-full bg-slate-900 hover:bg-slate-800 text-slate-300 p-2 rounded-xl text-xs font-semibold border border-slate-800 transition";
+            cancelBtn.innerText = "Cancel";
+            cancelBtn.onclick = closeMsgModal;
+            btnBox.appendChild(cancelBtn);
+
+            modal.classList.remove('hidden');
+        }
+		
+		function promptActivePlayerSub(teamKey, courtPlayerId) {
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            const courtPlayer = team.roster.find(p => p.id === courtPlayerId);
+            const benchPlayers = team.roster.filter(p => !p.onCourt);
+
+            if (benchPlayers.length === 0) {
+                showMessageModal("No Substitutes", "There are no players available on the bench.");
+                return;
+            }
+
+            const modal = document.getElementById('msgModal');
+            document.getElementById('msgModalTitle').innerText = `Substitute Out #${courtPlayer.number} ${courtPlayer.name}`;
+            document.getElementById('msgModalText').innerText = "Select substitute to bring onto the court:";
+
+            const btnBox = document.getElementById('msgModalButtons');
+            btnBox.className = "flex flex-col space-y-2 pt-2";
+            btnBox.innerHTML = '';
+
+            // Grid container for bench player tiles matching the bench panel style
+            const tilesGrid = document.createElement('div');
+            tilesGrid.className = "grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto p-1 bg-slate-950/60 rounded-xl border border-slate-800";
+
+            benchPlayers.forEach(player => {
+                const tile = document.createElement('div');
+                tile.className = "flex flex-col items-center justify-center p-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-orange-500 transition shadow-sm text-center cursor-pointer min-h-[72px]";
+                
+                const parts = player.name.trim().split(/\s+/);
+                const firstName = parts[0] || "";
+                const surname = parts.slice(1).join(" ") || "&nbsp;";
+
+                tile.innerHTML = `
+                    <span class="text-xl sm:text-2xl font-black font-mono text-orange-400 leading-none">#${player.number}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full mt-0.5 block">${firstName}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full">${surname}</span>
+                `;
+
+                tile.onclick = () => {
+                    performSubstitution(teamKey, player.id, courtPlayerId);
+                    closeMsgModal();
+                };
+
+                tilesGrid.appendChild(tile);
+            });
+
+            btnBox.appendChild(tilesGrid);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = "w-full bg-slate-900 hover:bg-slate-800 text-slate-300 p-2 rounded-xl text-xs font-semibold border border-slate-800 transition";
             cancelBtn.innerText = "Cancel";
             cancelBtn.onclick = closeMsgModal;
             btnBox.appendChild(cancelBtn);
@@ -1494,6 +1654,35 @@
             modal.classList.remove('hidden');
         }
 
+        function performSubstitution(teamKey, benchPlayerId, courtPlayerId) {
+            const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+            const benchPlayer = team.roster.find(p => p.id === benchPlayerId);
+            const courtPlayer = team.roster.find(p => p.id === courtPlayerId);
+
+            if (benchPlayer && courtPlayer) {
+                benchPlayer.onCourt = true;
+                courtPlayer.onCourt = false;
+
+                // Log event containing specific substitution payload data for undo tracking
+                const event = {
+                    id: 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                    timestamp: getDeviceTimestampWithMs(),
+                    quarter: currentGame.currentQuarter,
+                    teamKey,
+                    statType: 'SUB',
+                    inPlayerId: benchPlayerId,
+                    outPlayerId: courtPlayerId,
+                    description: `SUB: #${benchPlayer.number} ${benchPlayer.name} in for #${courtPlayer.number} ${courtPlayer.name}`,
+                    flaggedForDeletion: false
+                };
+                currentGame.events.unshift(event);
+                renderPlayLog();
+
+                renderCourtPlayers();
+                saveCurrentGameToStorage();
+            }
+        }
+		
         function renderPlayLog() {
             const container = document.getElementById('playLogContainer');
             container.innerHTML = '';
@@ -1505,6 +1694,7 @@
 
             currentGame.events.forEach(evt => {
                 const isCurrentQtr = evt.quarter === currentGame.currentQuarter;
+                const isSystemEvent = evt.statType === 'SYSTEM' || evt.description.includes('QUARTER') || evt.description.includes('MATCH COMPLETED');
                 const item = document.createElement('div');
                 
                 let flagClass = evt.flaggedForDeletion ? 'flagged-entry' : 'bg-slate-950/80 border-slate-800/80';
@@ -1516,7 +1706,7 @@
                         <span class="font-medium text-slate-200">${evt.description}</span>
                     </div>
 
-                    ${isCurrentQtr ? `
+                    ${isCurrentQtr && !isSystemEvent ? `
                         <button onclick="toggleFlagForDeletion('${evt.id}')" class="${evt.flaggedForDeletion ? 'text-rose-400' : 'text-slate-500 hover:text-rose-400'} p-1 transition" title="Flag for deletion">
                             <i class="fa-solid fa-trash-can text-xs"></i>
                         </button>
@@ -2060,7 +2250,7 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-[10px] ${m.synced ? 'text-emerald-400' : 'text-amber-400'} font-bold">${m.synced ? 'Synced' : 'Local Only'}</span>
-                            <button onclick="resumeOrViewMatch('${m.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">Open</button>
+                            <button onclick="resumeOrViewMatch('${m.id}')" class="archive-open-btn bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">Open</button>
                         </div>
                     `;
                     container.appendChild(item);
