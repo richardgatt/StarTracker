@@ -19,6 +19,66 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
     
     <style>
+		/* ========================================================================= */
+        /* PRINT / PDF STYLING OPTIMIZATIONS                                        */
+        /* ========================================================================= */
+        @media print {
+            /* Hide non-box-score elements (Header, Nav buttons, export bar, etc.) */
+            header,
+            #tab-tracker,
+            #tab-roster,
+            #tab-matches,
+            .flex.flex-wrap.gap-2.justify-end.pt-2 {
+                display: none !important;
+            }
+
+            /* Reset body and main backgrounds and padding for clean print */
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+            }
+
+            main {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Ensure box score view and tables fill the printable width cleanly */
+            #view-boxscore {
+                display: block !important;
+                width: 100% !important;
+            }
+
+            /* Force tables and cards to scale to the page width without clipping */
+            table {
+                width: 100% !important;
+                font-size: 10px !important;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                padding: 4px 6px !important;
+                color: #000000 !important;
+                border-color: #cbd5e1 !important;
+            }
+
+            /* Ensure dark background cards print with clean white backgrounds and borders */
+            .bg-slate-900\/90, .bg-slate-950 {
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+            }
+
+            /* Force responsive scaling depending on user print orientation */
+            @page {
+                size: auto;
+                margin: 10mm;
+            }
+        }
+	
         /* Custom Scrollbars */
         ::-webkit-scrollbar {
             width: 6px;
@@ -84,7 +144,7 @@
         }
 
         /* Match Completed / Locked State Styles */
-        body.match-locked button:not(#tab-tracker):not(#tab-boxscore):not(#tab-roster):not(#tab-matches):not(#resetMatchBtn):not(#syncCloudBtn):not(.archive-open-btn):not([onclick*="copyBoxScoreReport"]):not([onclick*="exportGameCSV"]):not([onclick*="exportGameJSON"]):not([onclick*="executeNewGame"]):not([onclick*="closeMsgModal"]),
+        body.match-locked button:not(#tab-tracker):not(#tab-boxscore):not(#tab-roster):not(#tab-matches):not(#resetMatchBtn):not(#syncCloudBtn):not(.archive-open-btn):not([onclick*="copyBoxScoreReport"]):not([onclick*="exportGamePDF"]):not([onclick*="exportGameCSV"]):not([onclick*="exportGameJSON"]):not([onclick*="executeNewGame"]):not([onclick*="closeMsgModal"]),
         body.match-locked input:not(#hideOpponentToggle),
         body.match-locked select,
         body.match-locked .draggable-bench,
@@ -142,13 +202,13 @@
                                     <!-- Populated dynamically via renderTimeoutDots -->
                                 </div>
                                 <div class="uppercase tracking-wider">
-                                    <span class="text-rose-400 font-mono text-[18px] font-black">F:<span id="homeFouls">0</span></span>
+                                    <span class="text-rose-400 font-mono text-[18px] font-black" id="homeFouls">0</span>
                                 </div>
                             </div>
                         </div>
                         <!-- Right: Large Score spanning both rows -->
                         <div class="pl-2.5 ml-2 border-l border-slate-800 flex items-center shrink-0">
-                            <span class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white leading-none" id="homeScore">0</span>
+                            <span class="text-2xl sm:text-5xl font-black font-mono tracking-tight text-white leading-none" id="homeScore">0</span>
                         </div>
                     </div>
 
@@ -168,7 +228,7 @@
                     <div id="awayHeaderPanel" class="col-span-5 flex items-center bg-slate-900/90 px-2 py-1.5 rounded-lg border border-slate-800/80 justify-between h-full cursor-pointer hover:border-slate-700 transition" onclick="toggleTimeout('away')" title="Tap to toggle Away Timeout">
                         <!-- Left: Large Score spanning both rows -->
                         <div class="pr-2.5 mr-2 border-r border-slate-800 flex items-center shrink-0">
-                            <span class="text-2xl sm:text-4xl font-black font-mono tracking-tight text-white leading-none" id="awayScore">0</span>
+                            <span class="text-2xl sm:text-5xl font-black font-mono tracking-tight text-white leading-none" id="awayScore">0</span>
                         </div>
                         <!-- Right: Team Name, Timeouts & Fouls stacked -->
                         <div class="flex flex-col flex-1 min-w-0 justify-between h-full py-0.5 items-end text-right">
@@ -182,7 +242,7 @@
                                     <!-- Populated dynamically via renderTimeoutDots -->
                                 </div>
                                 <div class="uppercase tracking-wider">
-                                    <span class="text-rose-400 font-mono text-[18px] font-black">F:<span id="awayFouls">0</span></span>
+                                    <span class="text-rose-400 font-mono text-[18px] font-black" id="awayFouls">0</span>
                                 </div>
                             </div>
                         </div>
@@ -223,39 +283,53 @@
             <!-- Active court grid and play log follow directly here -->
 
             <!-- ACTIVE PLAYERS & ACTION MATRIX CONTAINER -->
-            <div id="courtGridContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="courtGridContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 
                 <!-- HOME TEAM ACTIVE PLAYERS & BENCH PANEL -->
-                <div id="homeCourtSection" class="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 rounded-full" id="homeCourtBadge"></span>
-                            <h3 class="font-extrabold text-sm text-slate-100" id="homeCourtTitle">Home On-Court Players</h3>
-                        </div>
-                        <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active + Bench</span>
-                    </div>
+<div id="homeCourtSection" class="bg-slate-900/80 rounded-2xl p-2 sm:p-3 border border-slate-800 shadow-xl space-y-3">
+    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full" id="homeCourtBadge"></span>
+            <h3 class="font-extrabold text-xs sm:text-sm text-slate-100" id="homeCourtTitle">Home On-Court</h3>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Layout Toggle Button (Visible only when opponent details are hidden) -->
+            <button id="homeLayoutToggleBtn" onclick="toggleUserTeamLayout('home')" class="hidden bg-slate-800 hover:bg-slate-700 text-orange-400 px-2 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition items-center space-x-1" title="Toggle Layout">
+                <i id="homeLayoutIcon" class="fa-solid fa-table-cells-large text-xs"></i>
+                <span id="homeLayoutText">2-Col</span>
+            </button>
+            <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active</span>
+        </div>
+    </div>
 
-                    <!-- Active Players Cards List + Integrated 6th Bench Panel -->
-                    <div id="homeActiveList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+    <!-- Active Players Cards List -->
+    <div id="homeActiveList" class="grid grid-cols-1 gap-3">
+        <!-- Populated by JS -->
+    </div>
+</div>
 
-                <!-- AWAY TEAM ACTIVE PLAYERS & BENCH PANEL -->
-                <div id="awayCourtSection" class="bg-slate-900/80 rounded-2xl p-3 border border-slate-800 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 rounded-full" id="awayCourtBadge"></span>
-                            <h3 class="font-extrabold text-sm text-slate-100" id="awayCourtTitle">Away On-Court Players</h3>
-                        </div>
-                        <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active + Bench</span>
-                    </div>
+<!-- AWAY TEAM ACTIVE PLAYERS & BENCH PANEL -->
+<div id="awayCourtSection" class="bg-slate-900/80 rounded-2xl p-2 sm:p-3 border border-slate-800 shadow-xl space-y-3">
+    <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full" id="awayCourtBadge"></span>
+            <h3 class="font-extrabold text-xs sm:text-sm text-slate-100" id="awayCourtTitle">Away On-Court</h3>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Layout Toggle Button (Visible only when opponent details are hidden) -->
+            <button id="awayLayoutToggleBtn" onclick="toggleUserTeamLayout('away')" class="hidden bg-slate-800 hover:bg-slate-700 text-orange-400 px-2 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition items-center space-x-1" title="Toggle Layout">
+                <i id="awayLayoutIcon" class="fa-solid fa-table-cells-large text-xs"></i>
+                <span id="awayLayoutText">2-Col</span>
+            </button>
+            <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-semibold">5 Active</span>
+        </div>
+    </div>
 
-                    <!-- Active Players Cards List + Integrated 6th Bench Panel -->
-                    <div id="awayActiveList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <!-- Populated by JS -->
-                    </div>
-                </div>
+    <!-- Active Players Cards List -->
+    <div id="awayActiveList" class="grid grid-cols-1 gap-3">
+        <!-- Populated by JS -->
+    </div>
+</div>
 
             </div>
 
@@ -393,6 +467,10 @@
                     <i class="fa-solid fa-copy text-orange-400"></i>
                     <span>Copy Text Summary</span>
                 </button>
+                <button onclick="exportGamePDF()" class="bg-rose-700 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Export PDF</span>
+                </button>
                 <button onclick="exportGameCSV()" class="bg-emerald-700 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center space-x-2 transition">
                     <i class="fa-solid fa-file-csv"></i>
                     <span>Export CSV</span>
@@ -404,7 +482,7 @@
             </div>
         </section>
 
-        <!-- ========================================================================= -->
+<!-- ========================================================================= -->
         <!-- 3. SETUP & TEAM ROSTER MANAGEMENT TAB                                    -->
         <!-- ========================================================================= -->
         <section id="view-roster" class="tab-view hidden space-y-6">
@@ -452,11 +530,15 @@
                 
                 <!-- HOME TEAM PANEL -->
                 <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
+                    <!-- Header with Inline Apply Changes Button -->
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                             <i class="fa-solid fa-house text-orange-400"></i>
                             <span>Home Team Setup</span>
                         </h3>
+                        <button onclick="saveRosterChanges()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition">
+                            Apply Changes
+                        </button>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
@@ -470,13 +552,16 @@
                         </div>
                     </div>
 
-                    <!-- SAVE / LOAD / DELETE BUTTONS FOR HOME TEAM -->
+                    <!-- SAVE / LOAD / PASTE / DELETE BUTTONS FOR HOME TEAM -->
                     <div class="flex items-center space-x-1.5 pt-1">
                         <button onclick="openSaveTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Save Team
                         </button>
                         <button onclick="openLoadTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
                             <i class="fa-solid fa-folder-open mr-1"></i> Load Team
+                        </button>
+                        <button onclick="openPasteTeamModal('home')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-paste mr-1"></i> Paste Team
                         </button>
                         <button id="btnDeleteHomeTeam" disabled onclick="requestDeleteLoadedTeam('home')" class="bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
                             <i class="fa-solid fa-trash-can"></i>
@@ -487,7 +572,7 @@
                     <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
                         <span class="text-[11px] font-bold text-slate-300 block">Add Player to Home Roster</span>
                         <div class="flex space-x-2">
-                            <input type="number" id="newHomeJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
+                            <input type="text" inputmode="numeric" id="newHomeJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
                             <input type="text" id="newHomeName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
                             <button onclick="addPlayerToRoster('home')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
                         </div>
@@ -501,11 +586,15 @@
 
                 <!-- AWAY TEAM PANEL -->
                 <div class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-4">
+                    <!-- Header with Inline Apply Changes Button -->
                     <div class="flex justify-between items-center border-b border-slate-800 pb-2">
                         <h3 class="font-bold text-sm text-white flex items-center space-x-2">
                             <i class="fa-solid fa-plane-flight text-orange-400"></i>
                             <span>Away Team Setup</span>
                         </h3>
+                        <button onclick="saveRosterChanges()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded-lg text-xs font-bold shadow transition">
+                            Apply Changes
+                        </button>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">
@@ -519,13 +608,16 @@
                         </div>
                     </div>
 
-                    <!-- SAVE / LOAD / DELETE BUTTONS FOR AWAY TEAM -->
+                    <!-- SAVE / LOAD / PASTE / DELETE BUTTONS FOR AWAY TEAM -->
                     <div class="flex items-center space-x-1.5 pt-1">
                         <button onclick="openSaveTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
                             <i class="fa-solid fa-floppy-disk mr-1"></i> Save Team
                         </button>
                         <button onclick="openLoadTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
                             <i class="fa-solid fa-folder-open mr-1"></i> Load Team
+                        </button>
+                        <button onclick="openPasteTeamModal('away')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-paste mr-1"></i> Paste Team
                         </button>
                         <button id="btnDeleteAwayTeam" disabled onclick="requestDeleteLoadedTeam('away')" class="bg-slate-900 text-slate-600 border border-slate-800 px-2.5 py-1.5 rounded-lg text-xs font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
                             <i class="fa-solid fa-trash-can"></i>
@@ -536,7 +628,7 @@
                     <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800/80 space-y-2">
                         <span class="text-[11px] font-bold text-slate-300 block">Add Player to Away Roster</span>
                         <div class="flex space-x-2">
-                            <input type="number" id="newAwayJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
+                            <input type="text" inputmode="numeric" id="newAwayJersey" placeholder="#" class="w-16 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono">
                             <input type="text" id="newAwayName" placeholder="Player Name" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white">
                             <button onclick="addPlayerToRoster('away')" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-bold">Add</button>
                         </div>
@@ -548,12 +640,6 @@
                     </div>
                 </div>
 
-            </div>
-
-            <div class="flex justify-end pt-2">
-                <button onclick="saveRosterChanges()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition">
-                    Apply Roster Changes
-                </button>
             </div>
         </section>
 
@@ -684,6 +770,36 @@
             </div>
         </div>
     </div>
+	
+	<!-- PASTE TEAM MODAL -->
+	<div id="pasteTeamModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+		<div class="bg-slate-900 rounded-2xl border border-slate-800 max-w-lg w-full p-5 space-y-4 shadow-2xl">
+			<div class="flex justify-between items-center border-b border-slate-800 pb-2">
+				<h4 class="font-extrabold text-base text-white flex items-center space-x-2">
+					<i class="fa-solid fa-paste text-emerald-400"></i>
+					<span id="pasteModalTitle">Paste Team Roster</span>
+				</h4>
+				<button onclick="closePasteTeamModal()" class="text-slate-400 hover:text-white">
+					<i class="fa-solid fa-xmark text-base"></i>
+				</button>
+			</div>
+        
+			<div class="space-y-2">
+				<p class="text-xs text-slate-300">Paste your roster below in the format: <span class="font-mono bg-slate-800 px-1 py-0.5 rounded text-amber-300">KitNumber PlayerName</span></p>
+				<p class="text-[11px] text-slate-400 italic">Example (from image): <span class="font-mono">8 FABRI</span> or <span class="font-mono">7 FELICE PACE</span>. Put one player per line.</p>
+			</div>
+
+			<textarea id="pasteTeamTextArea" rows="12" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-emerald-500 placeholder:text-slate-600" placeholder="Enter one player per line..."></textarea>
+        
+			<div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+				<button onclick="closePasteTeamModal()" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-xs font-semibold">Cancel</button>
+				<button onclick="submitPastedTeam()" class="bg-emerald-600 hover:bg-emerald-600 text-white px-5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5">
+					<i class="fa-solid fa-check-circle"></i>
+					<span>Import & Replace Roster</span>
+				</button>
+			</div>
+		</div>
+	</div>
 
     <!-- CONFIRMATION / NOTICE MODAL -->
     <div id="msgModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -698,6 +814,34 @@
             </div>
         </div>
     </div>
+	
+	<!-- DELETE MATCH CONFIRMATION MODAL -->
+	<div id="deleteMatchModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+		<div class="bg-slate-900 rounded-2xl border border-rose-900/50 max-w-sm w-full p-5 space-y-4 shadow-2xl">
+			<div class="flex items-center space-x-3 border-b border-slate-800 pb-3">
+				<div class="w-10 h-10 rounded-full bg-rose-950 flex items-center justify-center text-rose-500 font-bold text-lg border border-rose-800">
+					<i class="fa-solid fa-triangle-exclamation"></i>
+				</div>
+				<div>
+					<h4 class="font-extrabold text-sm text-white">Delete Finished Match?</h4>
+					<p class="text-[11px] text-slate-400">This action cannot be undone.</p>
+				</div>
+			</div>
+        
+			<p class="text-xs text-slate-300">
+				Are you sure you want to permanently delete this completed match record from your saved history?
+			</p>
+
+			<div class="flex space-x-2 pt-2 border-t border-slate-800">
+				<button onclick="closeDeleteMatchModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-semibold transition">
+                Cancel
+				</button>
+				<button id="confirmDeleteMatchBtn" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-2 rounded-xl text-xs font-bold shadow-md transition">
+                Proceed
+				</button>
+			</div>
+		</div>
+	</div>
 
     <!-- Application JavaScript Engine -->
     <script>
@@ -733,58 +877,60 @@
         const DB_VERSION = 2;
         let db = null;
 
-        // Active Match State Object
-        let currentGame = {
-            id: 'match_' + Date.now(),
-            date: new Date().toISOString(),
-            status: 'IN_PROGRESS', // IN_PROGRESS, COMPLETED
-            synced: false,
-            hideOpponent: true, // Hide opponent toggle setting
-            myTeamChoice: 'home', // 'home' or 'away'
-            currentQuarter: 1,
-            homeTeam: {
-                filename: null,
-                name: "Home Warriors",
-                color: "#f97316",
-                timeoutsTaken: 0,
-                foulsThisQuarter: 0,
-                scoreByQuarter: [0, 0, 0, 0],
-                roster: []
-            },
-            awayTeam: {
-                filename: null,
-                name: "Away Titans",
-                color: "#38bdf8",
-                timeoutsTaken: 0,
-                foulsThisQuarter: 0,
-                scoreByQuarter: [0, 0, 0, 0],
-                roster: []
-            },
-            events: []
-        };
+       // Active Match State Object
+let currentGame = {
+    id: 'match_' + Date.now(),
+    date: new Date().toISOString(),
+    status: 'IN_PROGRESS',
+    synced: false,
+    hideOpponent: true,
+    myTeamChoice: 'home',
+    currentQuarter: 1,
+    homeTeam: {
+        filename: null,
+        name: "Home Warriors",
+        color: "#f97316",
+        timeoutsTaken: 0,
+        foulsThisQuarter: 0,
+        scoreByQuarter: [0, 0, 0, 0],
+        twoColumnLayout: false, // Added layout toggle state
+        roster: []
+    },
+    awayTeam: {
+        filename: null,
+        name: "Away Titans",
+        color: "#38bdf8",
+        timeoutsTaken: 0,
+        foulsThisQuarter: 0,
+        scoreByQuarter: [0, 0, 0, 0],
+        twoColumnLayout: false, // Added layout toggle state
+        roster: []
+    },
+    events: []
+};
 
         let targetSaveTeamSlot = 'home';
 
         // Default Sample Roster Initializer
         function initDefaultRosters() {
             currentGame.homeTeam.roster = [
-                { id: 'h1', number: '30', name: 'Stephen C.', onCourt: true, stats: createEmptyStats() },
-                { id: 'h2', number: '11', name: 'Klay T.', onCourt: true, stats: createEmptyStats() },
-                { id: 'h3', number: '22', name: 'Andrew W.', onCourt: true, stats: createEmptyStats() },
-                { id: 'h4', number: '23', name: 'Draymond G.', onCourt: true, stats: createEmptyStats() },
-                { id: 'h5', number: '5', name: 'Kevon L.', onCourt: true, stats: createEmptyStats() },
-                { id: 'h6', number: '0', name: 'Gary P.', onCourt: false, stats: createEmptyStats() },
-                { id: 'h7', number: '00', name: 'Jonathan K.', onCourt: false, stats: createEmptyStats() }
+                { id: 'h1', number: '1', name: 'Player 1', onCourt: true, stats: createEmptyStats() },
+                { id: 'h2', number: '2', name: 'Player 2', onCourt: true, stats: createEmptyStats() },
+                { id: 'h3', number: '3', name: 'Player 3', onCourt: true, stats: createEmptyStats() },
+                { id: 'h4', number: '4', name: 'Player 4', onCourt: true, stats: createEmptyStats() },
+                { id: 'h5', number: '5', name: 'Player 5', onCourt: true, stats: createEmptyStats() },
+                { id: 'h6', number: '6', name: 'Player 6', onCourt: false, stats: createEmptyStats() },
+                { id: 'h7', number: '7', name: 'Player 7', onCourt: false, stats: createEmptyStats() }
             ];
 
             currentGame.awayTeam.roster = [
-                { id: 'a1', number: '23', name: 'LeBron J.', onCourt: true, stats: createEmptyStats() },
-                { id: 'a2', number: '3', name: 'Anthony D.', onCourt: true, stats: createEmptyStats() },
-                { id: 'a3', number: '1', name: 'D\'Angelo R.', onCourt: true, stats: createEmptyStats() },
-                { id: 'a4', number: '15', name: 'Austin R.', onCourt: true, stats: createEmptyStats() },
-                { id: 'a5', number: '28', name: 'Rui H.', onCourt: true, stats: createEmptyStats() },
-                { id: 'a6', number: '2', name: 'Jarred V.', onCourt: false, stats: createEmptyStats() },
-                { id: 'a7', number: '10', name: 'Christian W.', onCourt: false, stats: createEmptyStats() }
+                { id: 'a1', number: '1', name: 'Player 1', onCourt: true, stats: createEmptyStats() },
+                { id: 'a2', number: '2', name: 'Player 2', onCourt: true, stats: createEmptyStats() },
+                { id: 'a3', number: '3', name: 'Player 3', onCourt: true, stats: createEmptyStats() },
+                { id: 'a4', number: '4', name: 'Player 4', onCourt: true, stats: createEmptyStats() },
+                { id: 'a5', number: '5', name: 'Player 5', onCourt: true, stats: createEmptyStats() },
+                { id: 'a6', number: '6', name: 'Player 6', onCourt: false, stats: createEmptyStats() },
+                { id: 'a7', number: '7', name: 'Player 7', onCourt: false, stats: createEmptyStats() }
             ];
         }
 
@@ -1081,6 +1227,11 @@
                     player.stats.pf += 1;
                     team.foulsThisQuarter += 1;
                     description = `Personal Foul by #${player.number} ${player.name}`;
+                    
+                    if (player.stats.pf >= 5) {
+                        player.fouledOut = true;
+                        description += ` (FOUL OUT!)`;
+                    }
                     break;
             }
 
@@ -1088,6 +1239,11 @@
             renderScoreboard();
             renderCourtPlayers();
             saveCurrentGameToStorage();
+
+            // Trigger immediate substitution prompt if player just fouled out
+            if (statType === 'FOUL' && player.stats.pf >= 5) {
+                promptActivePlayerSub(teamKey, player.id);
+            }
         }
 
         function logEvent(description, teamKey, playerId, statType = null) {
@@ -1300,56 +1456,99 @@
             saveCurrentGameToStorage();
         }
 
-        function renderAllViews() {
-            const isSingle = currentGame.hideOpponent;
-            const myTeam = currentGame.myTeamChoice;
+        /**
+ * Toggles between single-column and two-column side-by-side layout for the user's team.
+ */
+function toggleUserTeamLayout(teamKey) {
+    const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+    team.twoColumnLayout = !team.twoColumnLayout;
+    
+    renderAllViews();
+    saveCurrentGameToStorage();
+}
 
-            // Apply completion lock to body if match is completed
-            if (currentGame && currentGame.status === 'COMPLETED') {
-                document.body.classList.add('match-locked');
-            } else {
-                document.body.classList.remove('match-locked');
-            }
+function renderAllViews() {
+    const isSingle = currentGame.hideOpponent;
+    const myTeam = currentGame.myTeamChoice;
 
-            document.getElementById('hideOpponentToggle').checked = isSingle;
-            document.getElementById('myTeamChoice').value = myTeam;
-            document.getElementById('myTeamSelectorBox').style.display = isSingle ? 'flex' : 'none';
+    if (currentGame && currentGame.status === 'COMPLETED') {
+        document.body.classList.add('match-locked');
+    } else {
+        document.body.classList.remove('match-locked');
+    }
 
-            const courtGrid = document.getElementById('courtGridContainer');
-            const homeSec = document.getElementById('homeCourtSection');
-            const awaySec = document.getElementById('awayCourtSection');
-            const awayBoxSec = document.getElementById('awayBoxSection');
-            const homeActiveList = document.getElementById('homeActiveList');
-            const awayActiveList = document.getElementById('awayActiveList');
+    document.getElementById('hideOpponentToggle').checked = isSingle;
+    document.getElementById('myTeamChoice').value = myTeam;
+    document.getElementById('myTeamSelectorBox').style.display = isSingle ? 'flex' : 'none';
 
-            if (isSingle) {
-                if (myTeam === 'home') {
-                    homeSec.style.display = 'block';
-                    awaySec.style.display = 'none';
-                } else {
-                    homeSec.style.display = 'none';
-                    awaySec.style.display = 'block';
-                }
-                if (awayBoxSec) awayBoxSec.style.display = 'none';
-                
-                courtGrid.className = "grid grid-cols-1 gap-4";
-                homeActiveList.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
-                awayActiveList.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
-            } else {
-                homeSec.style.display = 'block';
-                awaySec.style.display = 'block';
-                if (awayBoxSec) awayBoxSec.style.display = 'block';
+    const courtGrid = document.getElementById('courtGridContainer');
+    const homeSec = document.getElementById('homeCourtSection');
+    const awaySec = document.getElementById('awayCourtSection');
+    const awayBoxSec = document.getElementById('awayBoxSection');
+    
+    const homeLayoutBtn = document.getElementById('homeLayoutToggleBtn');
+    const awayLayoutBtn = document.getElementById('awayLayoutToggleBtn');
 
-                courtGrid.className = "grid grid-cols-1 lg:grid-cols-2 gap-4";
-                homeActiveList.className = "grid grid-cols-1 gap-3";
-                awayActiveList.className = "grid grid-cols-1 gap-3";
-            }
+    // Control visibility of the toggle button based on hideOpponent and active team
+    if (isSingle) {
+        homeLayoutBtn.style.display = (myTeam === 'home') ? 'flex' : 'none';
+        awayLayoutBtn.style.display = (myTeam === 'away') ? 'flex' : 'none';
+    } else {
+        homeLayoutBtn.style.display = 'none';
+        awayLayoutBtn.style.display = 'none';
+    }
 
-            renderScoreboard();
-            renderCourtPlayers();
-            renderPlayLog();
-            renderRosterSetupTab();
+    // Update button text/icons based on current layout state
+    updateLayoutButtonUI('home', currentGame.homeTeam);
+    updateLayoutButtonUI('away', currentGame.awayTeam);
+
+    const homeActiveList = document.getElementById('homeActiveList');
+    const awayActiveList = document.getElementById('awayActiveList');
+
+    if (isSingle) {
+        if (myTeam === 'home') {
+            homeSec.style.display = 'block';
+            awaySec.style.display = 'none';
+        } else {
+            homeSec.style.display = 'none';
+            awaySec.style.display = 'block';
         }
+        if (awayBoxSec) awayBoxSec.style.display = 'none';
+        
+        courtGrid.className = "grid grid-cols-1 gap-4";
+        
+        // Apply 1-col or 2-col side-by-side layout depending on toggle state
+        homeActiveList.className = currentGame.homeTeam.twoColumnLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3";
+        awayActiveList.className = currentGame.awayTeam.twoColumnLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3";
+    } else {
+        homeSec.style.display = 'block';
+        awaySec.style.display = 'block';
+        if (awayBoxSec) awayBoxSec.style.display = 'block';
+
+        courtGrid.className = "grid grid-cols-2 gap-2 sm:gap-4";
+        homeActiveList.className = currentGame.homeTeam.twoColumnLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3";
+        awayActiveList.className = currentGame.awayTeam.twoColumnLayout ? "grid grid-cols-1 sm:grid-cols-2 gap-3" : "grid grid-cols-1 gap-3";
+    }
+
+    renderScoreboard();
+    renderCourtPlayers();
+    renderPlayLog();
+    renderRosterSetupTab();
+}
+
+function updateLayoutButtonUI(teamKey, team) {
+    const textEl = document.getElementById(`${teamKey}LayoutText`);
+    const iconEl = document.getElementById(`${teamKey}LayoutIcon`);
+    if (!textEl || !iconEl) return;
+
+    if (team.twoColumnLayout) {
+        textEl.innerText = "1-Col";
+        iconEl.className = "fa-solid fa-square text-xs";
+    } else {
+        textEl.innerText = "2-Col";
+        iconEl.className = "fa-solid fa-table-cells-large text-xs";
+    }
+}
 
         function calculateTeamTotal(team) {
             return team.scoreByQuarter.reduce((sum, val) => sum + (val || 0), 0);
@@ -1420,23 +1619,27 @@
                 const s = player.stats;
                 const totalReb = s.offReb + s.defReb;
                 const fgPct = s.fga > 0 ? Math.round((s.fgm / s.fga) * 100) : 0;
+                const isFouledOut = player.fouledOut || s.pf >= 5;
 
-                // Format single-digit numbers with a trailing non-breaking space for equal width alignment
-				const formattedNumber = player.number.length === 1 ? player.number + '&nbsp;' : player.number;
+                const formattedNumber = player.number.length === 1 ? player.number + '&nbsp;' : player.number;
 
-				const card = document.createElement('div');
-				card.className = "w-full bg-slate-950/90 rounded-2xl p-3 border border-slate-800 shadow-lg space-y-2.5 transition";
+                const card = document.createElement('div');
+                card.className = "w-full bg-slate-950/90 rounded-2xl p-3 border border-slate-800 shadow-lg space-y-2.5 transition";
 
-				card.innerHTML = `
+                card.innerHTML = `
 				    <div class="flex items-stretch space-x-2.5">
-				        <!-- Huge Jersey Number Box spanning full height (Clickable for Sub Out) -->
-				        <div onclick="promptActivePlayerSub('${teamKey}', '${player.id}')" title="Tap to Substitute Player" class="flex items-center justify-center bg-slate-900 hover:bg-slate-800 px-2 py-1 rounded-xl border border-slate-800/80 min-w-[54px] cursor-pointer transition group">
-				            <span class="text-3xl sm:text-4xl font-black font-mono text-orange-400 group-hover:text-orange-300 tracking-tighter leading-none">#${formattedNumber}</span>
+				        <!-- Jersey Number Box with optional Red Cross overlay if fouled out -->
+				        <div onclick="promptActivePlayerSub('${teamKey}', '${player.id}')" title="${isFouledOut ? 'Player Fouled Out! Tap to substitute' : 'Tap to Substitute Player'}" class="relative flex items-center justify-center bg-slate-900 hover:bg-slate-800 px-2 py-1 rounded-xl border ${isFouledOut ? 'border-rose-600 bg-rose-950/40' : 'border-slate-800/80'} min-w-[54px] cursor-pointer transition group">
+				            <span class="text-3xl sm:text-4xl font-black font-mono ${isFouledOut ? 'text-rose-600 opacity-40' : 'text-orange-400 group-hover:text-orange-300'} tracking-tighter leading-none">#${formattedNumber}</span>
+				            ${isFouledOut ? `
+				                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+				                    <i class="fa-solid fa-xmark text-4xl text-rose-600 font-black drop-shadow-md"></i>
+				                </div>
+				            ` : ''}
 				        </div>
        
                         <!-- Right Container: Player Name & 5-Box Foul Indicator on top, Summary Box below -->
                         <div class="flex-1 space-y-1 overflow-hidden">
-                            <!-- Player Name & 5-Box Foul Indicator side by side -->
                             <div class="flex items-center justify-between">
                                 <span class="font-black text-sm sm:text-base text-white truncate max-w-[130px] sm:max-w-[170px]">${player.name}</span>
                                 <div class="flex items-center space-x-1">
@@ -1444,7 +1647,6 @@
                                 </div>
                             </div>
 
-                            <!-- Player Line Hierarchy Summaries directly beneath Player Name -->
                             <div class="text-[10px] sm:text-[11px] font-mono text-slate-300 space-y-0.5 bg-slate-900/90 px-2 py-1 rounded-lg border border-slate-800/80">
                                 <div class="text-slate-400 font-semibold truncate">${s.fgm}/${s.fga} FG (${fgPct}%) | ${s.pm3}/${s.pa3} 3PT | ${s.ftm}/${s.fta} FT</div>
                                 <div class="font-bold text-amber-300 truncate">REB: ${totalReb} (${s.offReb}:${s.defReb}) | AST: ${s.ast} | <span class="text-orange-400 font-black">PTS: ${s.pts}</span></div>
@@ -1452,29 +1654,28 @@
                         </div>
                     </div>
 
-                    <!-- 7-Column Uniform Action Grid -->
-                    <div class="action-grid-7">
+                    <!-- 7-Column Uniform Action Grid (Disabled if fouled out) -->
+                    <div class="action-grid-7 ${isFouledOut ? 'opacity-30 pointer-events-none' : ''}">
                         <!-- Row 1 -->
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MADE')" class=" bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold rounded-lg text-xs h-14 flex items-center justify-center border border-emerald-500/40">+2 FG<br>MADE</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MADE')" class=" bg-emerald-800 hover:bg-emerald-700 text-amber-200 font-extrabold rounded-lg text-xs h-14 flex items-center justify-center border border-emerald-500/40">+3PT<br>MADE</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MADE')" class=" bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-lg text-xs h-14 flex items-center justify-center border border-emerald-400/40">+1FT<br>MADE</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'OFF_REB')" class=" bg-blue-700 hover:bg-blue-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-14 flex items-center justify-center border border-blue-500/40">OFF<br>REB</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'STEAL')" class=" bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-lg text-xs h-14 flex items-center justify-center border border-purple-500/40">STL</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'TURNOVER')" class=" bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg text-xs h-14 flex items-center justify-center border border-amber-500/40">TURN<br>OVER</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MADE')" class="bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-emerald-500/40">+2 FG<br>MADE</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MADE')" class="bg-emerald-800 hover:bg-emerald-700 text-amber-200 font-extrabold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-emerald-500/40">+3PT<br>MADE</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MADE')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-emerald-400/40">+1FT<br>MADE</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'OFF_REB')" class="bg-blue-700 hover:bg-blue-600 text-white font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-blue-500/40">OFF<br>REB</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'STEAL')" class="bg-purple-700 hover:bg-purple-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-purple-500/40">STL</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'TURNOVER')" class="bg-amber-700 hover:bg-amber-600 text-white font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-amber-500/40">TURN<br>OVER</button>
                         
-                        <!-- Spanning FOUL button across both rows -->
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FOUL')" class=" col-span-1 row-span-2 bg-rose-700 hover:bg-rose-600 text-white font-black text-xs rounded-lg h-full min-h-[76px] flex flex-col items-center justify-center border border-rose-500/50 shadow-md">
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FOUL')" class="col-span-1 row-span-2 bg-rose-700 hover:bg-rose-600 text-white font-black text-[10px] sm:text-xs h-full min-h-[92px] flex flex-col items-center justify-center border border-rose-500/50 shadow-md">
                             <i class="fa-solid fa-triangle-exclamation text-xs mb-0.5"></i>
                             <span>FOUL</span>
                         </button>
 
                         <!-- Row 2 -->
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MISS')" class=" bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-14 flex items-center justify-center border border-slate-700">MISS<br>FG</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MISS')" class=" bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-14 flex items-center justify-center border border-slate-700">MISS<br>3PT</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MISS')" class=" bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[10px] sm:text-xs h-14 flex items-center justify-center border border-slate-700">MISS<br>FT</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'DEF_REB')" class=" bg-indigo-700 hover:bg-indigo-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-14 flex items-center justify-center border border-indigo-500/40">DEF<br>REB</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'ASSIST')" class=" bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-lg text-xs h-14 flex items-center justify-center border border-sky-500/40">AST</button>
-                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'BLOCK')" class=" bg-teal-700 hover:bg-teal-600 text-white font-bold rounded-lg text-xs h-14 flex items-center justify-center border border-teal-500/40">BLK</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '2PT_MISS')" class="bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-slate-700">MISS<br>FG</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', '3PT_MISS')" class="bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-slate-700">MISS<br>3PT</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'FT_MISS')" class="bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-slate-700">MISS<br>FT</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'DEF_REB')" class="bg-indigo-700 hover:bg-indigo-600 text-white font-bold rounded-lg text-[9px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-indigo-500/40">DEF<br>REB</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'ASSIST')" class="bg-sky-700 hover:bg-sky-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-sky-500/40">AST</button>
+                        <button onclick="recordStatDirect('${teamKey}', '${player.id}', 'BLOCK')" class="bg-teal-700 hover:bg-teal-600 text-white font-bold rounded-lg text-[10px] sm:text-xs h-11 sm:h-12 flex items-center justify-center border border-teal-500/40">BLK</button>
                     </div>
                 `;
 
@@ -1505,29 +1706,38 @@
                 benchListContainer.innerHTML = `<div class="col-span-7 text-[11px] text-slate-500 italic text-center py-4">No substitutes on bench.</div>`;
             } else {
                 benchPlayers.forEach(player => {
-                    const tile = document.createElement('div');
-                    tile.draggable = true;
-                    // Enlarged tile occupying 2 rows in action grid system style, kit number top & player name beneath inside tile
-                    tile.className = "draggable-bench flex flex-col items-center justify-center p-1 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-orange-500 transition shadow-sm text-center cursor-pointer min-h-[72px]";
-					const parts = player.name.trim().split(/\s+/);
-					const firstName = parts[0] || "";
-					const surname = parts.slice(1).join(" ") || "&nbsp;";
-                    tile.innerHTML = `
-                        <span class="text-xl sm:text-2xl font-black font-mono text-orange-400 leading-none">#${player.number}</span>
-                        <span class="text-[10px] font-bold text-white truncate w-full mt-0.5 block">${firstName}</span>
-						<span class="text-[10px] font-bold text-white truncate w-full">${surname}</span>
-                    `;
+                const tile = document.createElement('div');
+                const isFouledOut = player.fouledOut;
+                
+                tile.draggable = !isFouledOut;
+                tile.className = `relative flex flex-col items-center justify-center p-1 rounded-xl bg-slate-900 border ${isFouledOut ? 'border-rose-900/50 bg-rose-950/20 opacity-60 cursor-not-allowed' : 'border-slate-700/80 hover:border-orange-500 cursor-pointer'} transition shadow-sm text-center min-h-[72px]`;
+                
+                const parts = player.name.trim().split(/\s+/);
+                const firstName = parts[0] || "";
+                const surname = parts.slice(1).join(" ") || "&nbsp;";
 
+                tile.innerHTML = `
+                    <span class="text-xl sm:text-2xl font-black font-mono ${isFouledOut ? 'text-rose-700 opacity-40' : 'text-orange-400'} leading-none">#${player.number}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full mt-0.5 block">${firstName}</span>
+                    <span class="text-[10px] font-bold text-white truncate w-full">${surname}</span>
+                    ${isFouledOut ? `
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <i class="fa-solid fa-xmark text-3xl text-rose-600 font-black drop-shadow"></i>
+                        </div>
+                    ` : ''}
+                `;
+
+                if (!isFouledOut) {
                     tile.ondragstart = (e) => {
                         e.dataTransfer.setData('text/plain', player.id);
                     };
-
                     tile.onclick = () => {
                         promptTapSub(teamKey, player.id);
                     };
+                }
 
-                    benchListContainer.appendChild(tile);
-                });
+                benchListContainer.appendChild(tile);
+            });
             }
         }
 
@@ -1602,10 +1812,11 @@
 		function promptActivePlayerSub(teamKey, courtPlayerId) {
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
             const courtPlayer = team.roster.find(p => p.id === courtPlayerId);
-            const benchPlayers = team.roster.filter(p => !p.onCourt);
+            // Exclude bench players who have already fouled out from being subbed in
+            const benchPlayers = team.roster.filter(p => !p.onCourt && !p.fouledOut);
 
             if (benchPlayers.length === 0) {
-                showMessageModal("No Substitutes", "There are no players available on the bench.");
+                showMessageModal("No Substitutes", "There are no eligible players available on the bench.");
                 return;
             }
 
@@ -1617,7 +1828,6 @@
             btnBox.className = "flex flex-col space-y-2 pt-2";
             btnBox.innerHTML = '';
 
-            // Grid container for bench player tiles matching the bench panel style
             const tilesGrid = document.createElement('div');
             tilesGrid.className = "grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto p-1 bg-slate-950/60 rounded-xl border border-slate-800";
 
@@ -2022,17 +2232,250 @@
             saveCurrentGameToStorage();
             showMessageModal("Team Deleted", `Team "${filename}" deleted permanently.`);
         }
+		
+		/**
+		* =========================================================================
+		* PASTE TEAM / TEXT IMPORT SYSTEM
+		* =========================================================================
+		*/
+
+		let targetPasteTeamSlot = 'home'; // Stores which team slot we are importing to
+
+		/**
+		* Opens the Paste Team modal dialog for the specified team slot.
+		* @param {string} teamKey - 'home' or 'away'
+		*/
+		function openPasteTeamModal(teamKey) {
+			targetPasteTeamSlot = teamKey;
+			const teamName = teamKey === 'home' ? currentGame.homeTeam.name : currentGame.awayTeam.name;
+    
+			// Update the title to be specific
+			document.getElementById('pasteModalTitle').innerText = `Paste Roster for ${teamName}`;
+    
+			// Clear previous contents
+			const textArea = document.getElementById('pasteTeamTextArea');
+			textArea.value = '';
+    
+			// Add the sample data from the image to the placeholder to guide the user
+			const exampleData = "8 FABRI\n7 FELICE PACE\n16 SULTANA";
+			textArea.placeholder = `Format: [Number] [Name]\nExample:\n${exampleData}`;
+
+			// Open the modal
+			document.getElementById('pasteTeamModal').classList.remove('hidden');
+			textArea.focus();
+		}
+
+		/**
+		* Closes the Paste Team modal dialog.
+		* Also binds to the Enter key listener on popup modals (global window listener).
+		*/
+		function closePasteTeamModal() {
+			document.getElementById('pasteTeamModal').classList.add('hidden');
+		}
+
+		/**
+		* Validates a single input line against the rule "leading 0 not allowed except for 0 and 00".
+		* Uses the existing logic shared with handleJerseyInput.
+		* @param {string} numberStr
+		* @returns {boolean}
+		*/
+		function isParsedKitNumberValid(numberStr) {
+			// Basic number key registration check
+			if (!/^\d+$/.test(numberStr)) return false;
+
+			// Boundary check 0-99 and 00
+			const numValue = parseInt(numberStr, 10);
+			if (numberStr === '00') return true; // Allowed 00 explicitly
+			if (numValue < 0 || numValue > 99) return false;
+
+			// Check "no leading 0 except for 0 and 00" rule
+			// We already parseInt'd, so check string normalization
+			let normalized = numberStr;
+			if (normalized.length > 1 && normalized.startsWith('0') && normalized !== '00') {
+				normalized = normalized.replace(/^0+/, '');
+				// If the parsed string doesn't match the original normalization, it was invalid input
+				if (normalized !== numberStr) return false;
+			}
+
+			return true;
+		}
+
+		/**
+		* Processes the text area, parses the roster, and replaces the current team.
+		* This is the confirmation action (onclick on the Submit button).
+		*/
+		function submitPastedTeam() {
+			const textData = document.getElementById('pasteTeamTextArea').value.trim();
+			if (!textData) {
+				showMessageModal("Input Required", "Please paste your roster data into the text area.");
+				return;
+			}
+
+			const team = targetPasteTeamSlot === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
+			const rosterLines = textData.split('\n');
+			const newRoster = [];
+			const usedKitNumbers = new Set();
+			let errorLog = [];
+
+			// ROSTER LIMIT CHECK (Pre-validation)
+			if (rosterLines.length > 15) {
+				showMessageModal("Roster Limit Exceeded", "The text pasted contains more than 15 players. The maximum roster size is 15.");
+				return;
+			}
+
+			// Process each line
+			for (let i = 0; i < rosterLines.length; i++) {
+				const line = rosterLines[i].trim();
+				if (!line) continue; // Skip empty lines
+
+				// Parse line: [Number] [Name]
+				// Example: "7 FELICE PACE" splits to ["7", "FELICE", "PACE"]
+				const parts = line.split(/\s+/);
+				if (parts.length < 2) {
+					errorLog.push(`Line ${i + 1}: Malformed line. Should be "[Number] [Name]".`);
+					continue;
+				}
+
+				const rawKitNumber = parts[0];
+				// The rest of the line is the name, to handle multi-word names like "FELICE PACE"
+				const playerName = parts.slice(1).join(' ').trim();
+
+				// VALIDATION 1: Kit Number Rules
+				if (!isParsedKitNumberValid(rawKitNumber)) {
+					errorLog.push(`Line ${i + 1}: Kit Number "#${rawKitNumber}" is invalid (must be 0-99 or 00, no leading 0s except for 0 and 00).`);
+					continue;
+				}
+
+				// VALIDATION 2: Duplicate Kit Numbers
+				if (usedKitNumbers.has(rawKitNumber)) {
+					errorLog.push(`Line ${i + 1}: Duplicate Jersey Number "${rawKitNumber}" found on this roster.`);
+					continue;
+				}
+
+				// VALIDATION 3: Data present
+				if (!playerName) {
+					errorLog.push(`Line ${i + 1}: Player Name is missing.`);
+					continue;
+				}
+
+				// Create player object
+				const newPlayer = {
+					id: targetPasteTeamSlot[0] + Date.now() + i, // Unique ID creation based on team key + timestamp + index
+					number: rawKitNumber,
+					name: playerName,
+					onCourt: false, // Start on bench for simplicity during import
+					stats: createEmptyStats(),
+					fouledOut: false // Reset foul out state
+				};
+
+				newRoster.push(newPlayer);
+				usedKitNumbers.add(rawKitNumber);
+			}
+
+			// IF ERRORS, DO NOT APPLY
+			if (errorLog.length > 0) {
+				// Build a detailed error message
+				const errorMessage = `Import aborted due to errors:\n\n` + errorLog.slice(0, 5).join('\n') + (errorLog.length > 5 ? '\n...and more' : '');
+				showMessageModal("Import Error", errorMessage);
+				return; // Halt the replacement
+			}
+
+			// NO ERRORS: APPLY ROSTER CHANGES
+			// Replace the existing roster array
+			team.roster = newRoster;
+	
+			// Re-check "On Court" logic to ensure standard 5 on court if possible
+			// (This is an optional helper to ensure the game isn't unplayable after import)
+			const activeCount = team.roster.filter(p => p.onCourt).length;
+			if (activeCount === 0 && team.roster.length > 0) {
+				// Automatically put the first 5 imported players on court
+				team.roster.slice(0, 5).forEach(p => p.onCourt = true);
+			}
+
+			// Finalize the changes
+			saveCurrentGameToStorage();
+			closePasteTeamModal();
+			renderAllViews(); // Triggers re-renders of court lists, bench panels, etc.
+    
+			// Clear any loaded filename as the roster has changed from the saved file
+			team.filename = null;
+			updateDeleteTeamButtonsState();
+    
+			showMessageModal("Team Imported", `Successfully imported ${newRoster.length} players into the ${targetPasteTeamSlot.toUpperCase()} team.`);
+		}
 
         /**
          * =========================================================================
          * ROSTER SETUP & MANUALLY ADD PLAYERS
          * =========================================================================
          */
+        function handleJerseyKeydown(e) {
+            // Allow navigation and editing keys
+            const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+            if (allowedKeys.includes(e.key) || (e.ctrlKey || e.metaKey)) return;
+            
+            // Block anything that is not a number key (0-9)
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        }
+
+        function handleJerseyInput(e) {
+            const input = e.target;
+            let val = input.value.replace(/\D/g, ''); // Keep only digits
+
+            // Explicitly allow "0" and "00"
+            if (val === '0' || val === '00') {
+                input.value = val;
+                return;
+            }
+
+            // Remove leading zeros for non-zero numbers (e.g., "07" -> "7", "005" -> "5")
+            if (val.length > 1 && val.startsWith('0')) {
+                val = val.replace(/^0+/, '');
+            }
+
+            // Restrict values between 0 and 99 (max 2 digits)
+            if (val.length > 0) {
+                const num = parseInt(val, 10);
+                if (num > 99 || val.length > 2) {
+                    val = val.slice(0, 2);
+                    if (parseInt(val, 10) > 99) {
+                        val = '99';
+                    }
+                }
+            }
+
+            input.value = val;
+        }
+
         function renderRosterSetupTab() {
             document.getElementById('homeTeamNameInput').value = currentGame.homeTeam.name;
             document.getElementById('homeTeamColorInput').value = currentGame.homeTeam.color;
             document.getElementById('awayTeamNameInput').value = currentGame.awayTeam.name;
             document.getElementById('awayTeamColorInput').value = currentGame.awayTeam.color;
+
+            // Bind keydown, input validation, and Enter key listeners for Home inputs
+            const homeJersey = document.getElementById('newHomeJersey');
+            const homeName = document.getElementById('newHomeName');
+            if (homeJersey) {
+                homeJersey.onkeydown = handleJerseyKeydown;
+                homeJersey.oninput = handleJerseyInput;
+            }
+            if (homeName) {
+                homeName.onkeydown = (e) => { if (e.key === 'Enter') addPlayerToRoster('home'); };
+            }
+
+            // Bind keydown, input validation, and Enter key listeners for Away inputs
+            const awayJersey = document.getElementById('newAwayJersey');
+            const awayName = document.getElementById('newAwayName');
+            if (awayJersey) {
+                awayJersey.onkeydown = handleJerseyKeydown;
+                awayJersey.oninput = handleJerseyInput;
+            }
+            if (awayName) {
+                awayName.onkeydown = (e) => { if (e.key === 'Enter') addPlayerToRoster('away'); };
+            }
 
             renderRosterListUI('home', currentGame.homeTeam, 'homeRosterList');
             renderRosterListUI('away', currentGame.awayTeam, 'awayRosterList');
@@ -2045,9 +2488,76 @@
 
             team.roster.forEach(player => {
                 const item = document.createElement('div');
-                item.className = "flex items-center justify-between p-2 bg-slate-950 rounded-xl border border-slate-800 text-xs";
+                item.draggable = true;
+                item.className = "flex items-center justify-between p-2 bg-slate-950 rounded-xl border border-slate-800 text-xs cursor-grab active:cursor-grabbing transition select-none relative";
+                
+                // Drag and drop event handlers
+                item.ondragstart = (e) => {
+                    e.dataTransfer.setData('text/plain', player.id);
+                    item.classList.add('opacity-40');
+                };
+
+                item.ondragend = () => {
+                    item.classList.remove('opacity-40');
+                };
+
+                item.ondragover = (e) => {
+                    e.preventDefault();
+                    const rect = item.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+
+                    // Clear previous indicators
+                    item.classList.remove('border-t-2', 'border-b-2', 'border-rose-500', 'border-slate-800');
+
+                    // Display thin red horizontal line above or below depending on mouse position
+                    if (e.clientY < midpoint) {
+                        item.classList.add('border-t-2', 'border-rose-500');
+                    } else {
+                        item.classList.add('border-b-2', 'border-rose-500');
+                    }
+                };
+
+                item.ondragleave = () => {
+                    item.classList.remove('border-t-2', 'border-b-2', 'border-rose-500');
+                    item.classList.add('border-slate-800');
+                };
+
+                item.ondrop = (e) => {
+                    e.preventDefault();
+                    const rect = item.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    const dropAbove = e.clientY < midpoint;
+
+                    item.classList.remove('border-t-2', 'border-b-2', 'border-rose-500');
+                    item.classList.add('border-slate-800');
+
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    if (draggedId === player.id) return;
+
+                    const roster = team.roster;
+                    const draggedIndex = roster.findIndex(p => p.id === draggedId);
+                    const targetId = player.id;
+
+                    if (draggedIndex !== -1) {
+                        // Safely remove dragged player from array
+                        const [movedPlayer] = roster.splice(draggedIndex, 1);
+                        
+                        // Find the updated target index after removal
+                        const newTargetIndex = roster.findIndex(p => p.id === targetId);
+                        
+                        // Insert above or below target element based on entry point
+                        const insertIndex = dropAbove ? newTargetIndex : newTargetIndex + 1;
+                        roster.splice(insertIndex, 0, movedPlayer);
+
+                        renderRosterSetupTab();
+                        renderCourtPlayers();
+                        saveCurrentGameToStorage();
+                    }
+                };
+
                 item.innerHTML = `
                     <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-grip-vertical text-slate-600 text-[10px] mr-1"></i>
                         <span class="font-mono text-orange-400 font-bold min-w-[24px]">#${player.number}</span>
                         <span class="font-semibold text-white">${player.name}</span>
                         ${player.onCourt ? '<span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-bold">On Court</span>' : ''}
@@ -2098,6 +2608,15 @@
 
             const team = teamKey === 'home' ? currentGame.homeTeam : currentGame.awayTeam;
 
+            // Check if jersey number already exists in roster
+            const isDuplicateNumber = team.roster.some(p => p.number.toString().trim() === number);
+            if (isDuplicateNumber) {
+                showMessageModal("Duplicate Jersey Number", `Jersey #${number} is already assigned to a player on this team.`);
+                jerseyInput.focus();
+                jerseyInput.select();
+                return;
+            }
+
             // Check for maximum roster limit of 15 players
             if (team.roster.length >= 15) {
                 showMessageModal("Roster Limit Reached", "A team can have a maximum of 15 players on its roster.");
@@ -2117,6 +2636,9 @@
             team.roster.push(newPlayer);
             jerseyInput.value = '';
             nameInput.value = '';
+
+            // Return focus back to the respective kit number input field
+            jerseyInput.focus();
 
             renderRosterSetupTab();
             renderCourtPlayers();
@@ -2239,17 +2761,21 @@
                     const dt = new Date(m.date).toLocaleString();
                     const hTotal = calculateTeamTotal(m.homeTeam);
                     const aTotal = calculateTeamTotal(m.awayTeam);
+                    const isCompleted = m.status === 'COMPLETED';
 
                     item.innerHTML = `
                         <div class="space-y-1">
                             <div class="font-bold text-white flex items-center space-x-2">
                                 <span>${m.homeTeam.name} ${hTotal} - ${aTotal} ${m.awayTeam.name}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded ${m.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'} font-bold">${m.status}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded ${isCompleted ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-amber-950 text-amber-400 border border-amber-800'} font-bold">${m.status}</span>
                             </div>
                             <div class="text-[10px] text-slate-400 font-mono">${dt} | ${m.events.length} Events</div>
                         </div>
                         <div class="flex items-center space-x-2">
                             <span class="text-[10px] ${m.synced ? 'text-emerald-400' : 'text-amber-400'} font-bold">${m.synced ? 'Synced' : 'Local Only'}</span>
+                            ${isCompleted ? `
+                                <button onclick="requestDeleteMatch('${m.id}')" class="bg-rose-900/80 hover:bg-rose-800 text-rose-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-rose-700 transition">Delete</button>
+                            ` : ''}
                             <button onclick="resumeOrViewMatch('${m.id}')" class="archive-open-btn bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-700">Open</button>
                         </div>
                     `;
@@ -2257,6 +2783,35 @@
                 });
 
                 updateSyncCounts(matches.length, pendingCount, syncedCount);
+            };
+        }
+		
+		
+		function requestDeleteMatch(matchId) {
+            const modal = document.getElementById('msgModal');
+            document.getElementById('msgModalTitle').innerText = "Delete Completed Match?";
+            document.getElementById('msgModalText').innerText = "WARNING: This match has finished. Deleting it will permanently remove all of its event logs and statistics from the database. This action cannot be undone.";
+
+            const btnBox = document.getElementById('msgModalButtons');
+            btnBox.className = "flex space-x-2 pt-2";
+            btnBox.innerHTML = `
+                <button onclick="confirmDeleteMatch('${matchId}')" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-2 rounded-xl text-xs font-bold transition">Proceed</button>
+                <button onclick="closeMsgModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-xl text-xs font-semibold transition">Cancel</button>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        async function confirmDeleteMatch(matchId) {
+            closeMsgModal();
+            if (!db) await initDatabase();
+            
+            const tx = db.transaction('matches', 'readwrite');
+            tx.objectStore('matches').delete(matchId);
+
+            tx.oncomplete = () => {
+                loadSavedMatchesList();
+                showMessageModal("Match Deleted", "The completed match has been successfully deleted from the archive.");
             };
         }
 
@@ -2332,7 +2887,17 @@
             });
         }
 
-        function exportGameCSV() {
+		function exportGamePDF() {
+            // Ensure user is on the box score view so it is in focus for printing
+            switchTab('boxscore');
+            
+            // Give the DOM a brief moment to render, then invoke print dialog
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+        
+		function exportGameCSV() {
             let csv = "Team,Jersey,Player,PTS,FGM,FGA,3PM,3PA,FTM,FTA,OFFREB,DEFREB,AST,STL,BLK,TO,PF\n";
             
             const appendRows = (team) => {
@@ -2381,6 +2946,18 @@
         /**
          * INITIALIZATION ON PAGE LOAD
          */
+		 // Allow pressing the Enter key to dismiss the message modal
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const msgModal = document.getElementById('msgModal');
+                // Check if msgModal is currently visible (does not have 'hidden' class)
+                if (msgModal && !msgModal.classList.contains('hidden')) {
+                    e.preventDefault();
+                    closeMsgModal();
+                }
+            }
+        });
+		 
         window.addEventListener('DOMContentLoaded', async () => {
             await initDatabase();
             await loadGameFromStorage();
